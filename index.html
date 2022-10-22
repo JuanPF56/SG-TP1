@@ -58,6 +58,7 @@
             }
         </script>
 
+        <script type="text/javascript" src="js/surfaces.js"></script>
         <script type="text/javascript" src="js/objects.js"></script>
         
         <script>
@@ -191,31 +192,27 @@
 
                 setupVertexShaderMatrix();
 
-                t += 0.001;
+                t += 0.0005;
 
-                group = new Transformable();
+                object1 = new Object3D(new Sphere);
+                object2 = new Object3D(new Sphere);
+                object3 = new Object3D(new Sphere);
+                group = new Transformable([object2, object3]);
+                scene = new Transformable([object1, group]);
 
-                object1 = new Object3D(new Surface, group);
-                subgroup = new TransformableWithParent(group);
-                object2 = new Object3D(new Surface, subgroup);
-                object3 = new Object3D(new Surface, subgroup);
-
-
-                object3.scale(0.15);
-                object2.scale(0.5);
                 object1.scale(0.75);
+                object2.scale(0.5);
 
                 object3.rotateY(Math.PI*2*t*10);
-                object3.translate(5.0,0.0,0.0);
+                object3.translate(0.75,0.0,0.0);
+                object3.scale(0.15);
                 
-                subgroup.rotateY(Math.PI*2*t*10);
-                subgroup.translate(2.0,0.0,0.0);
+                group.rotateY(Math.PI*2*t*10);
+                group.translate(2.0,0.0,0.0);
 
-                group.rotateZ(Math.PI*2*t);
+                scene.rotateZ(Math.PI*2*t);
 
-                object1.draw();
-                object2.draw();
-                object3.draw();
+                scene.draw(mat4.create(),mat4.create());
 
             }
 
@@ -223,7 +220,7 @@
 
             function animate(){
                 
-                rotate_angle += 0.1;
+                //rotate_angle += 0.1;
                 //mat4.identity(modelMatrix);
                 //mat4.rotate(modelMatrix,modelMatrix, rotate_angle, [1.0, 0.0, 1.0]);
 

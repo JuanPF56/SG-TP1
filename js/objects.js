@@ -1,52 +1,17 @@
-class Surface {
-
-	//Esfera
-
-	getPosition(u,v){
-
-		var x = Math.cos(v*Math.PI-Math.PI/2)*Math.sin(u*(Math.PI*2));
-        var y = Math.sin(v*Math.PI-Math.PI/2);
-        var z = Math.cos(v*Math.PI-Math.PI/2)*Math.cos(u*(Math.PI*2));
-        return vec3.fromValues(x,y,z);
-
-    }
-
-    getNormal(alfa,beta){
-
-        var p=this.getPosition(alfa,beta);
-        var v=vec3.create();
-        vec3.normalize(v,p);
-
-        var delta=0.05;
-        var p1=this.getPosition(alfa,beta);
-        var p2=this.getPosition(alfa,beta+delta);
-        var p3=this.getPosition(alfa+delta,beta);
-
-        var v1=vec3.fromValues(p2[0]-p1[0],p2[1]-p1[1],p2[2]-p1[2]);
-        var v2=vec3.fromValues(p3[0]-p1[0],p3[1]-p1[1],p3[2]-p1[2]);
-
-        vec3.normalize(v1,v1);
-        vec3.normalize(v2,v2);
-        
-        var n=vec3.create();
-        vec3.cross(n,v1,v2);
-        vec3.scale(n,n,-1);
-        
-        return n;
-
-    }
-
-}
-
-
 class Transformable {
 
     posMatrix;
     normMatrix;
+    children = [];
     
-    constructor(){
+    constructor(children=[]){
         this.posMatrix = mat4.create();
         this.normMatrix = mat4.create();
+        this.children = this.children.concat(children);
+    }
+
+    addChildren(children){
+         this.children = this.children.concat(children);
     }
 
     getPosMatrix(){
@@ -81,34 +46,23 @@ class Transformable {
         mat4.scale(this.normMatrix,this.normMatrix,[scaleFactor,scaleFactor,scaleFactor]);
     }
 
+    draw(parentPosMat, parentNormMat){
+
+        var posMat = mat4.create();
+        mat4.mul(posMat, parentPosMat, this.posMatrix);
+        var normMat = mat4.create();
+        mat4.mul(normMat, parentNormMat, this.normMatrix);
+
+        this.children.forEach(child => child.draw(posMat,normMat));
+        //for (var i = 0; i < this.children.length; i++) {
+          //  this.children[i].draw(parentPosMat, parentNormMat);
+        //}
+    }
+
 
 }
 
-class TransformableWithParent extends Transformable {
-
-    parent;
-
-    constructor(parent){
-        super();
-        this.parent = parent;
-    }
-
-    getPosMatrix(){
-        let m = mat4.create();
-        mat4.mul(m, this.parent.getPosMatrix(), this.posMatrix);
-        return m;
-    }
-
-    getNormMatrix(){
-        let m = mat4.create();
-        mat4.mul(m, this.parent.getNormMatrix(), this.normMatrix);
-        return m;
-    }
-
-}
-
-
-class Object3D extends TransformableWithParent {
+class Object3D extends Transformable {
 
     surface;
 
@@ -119,12 +73,12 @@ class Object3D extends TransformableWithParent {
     rows = 50;
     cols = 50;
 
-    constructor(surface, parent){
-        super(parent);
+    constructor(surface, children=[]){
+        super(children);
         this.surface = surface;
     }
 
-    setupBuffers() {
+    setupBuffers(posMat, normMat) {
 
         for (var i=0; i <= this.rows; i++) {
             for (var j=0; j <= this.cols; j++) {
@@ -134,9 +88,7 @@ class Object3D extends TransformableWithParent {
 
                 var p = this.surface.getPosition(u,v);
                 var pos = vec4.fromValues(p[0],p[1],p[2],1.0);
-                var m = mat4.create();
-                mat4.mul(m, this.parent.getPosMatrix(), this.posMatrix);
-                vec4.transformMat4(pos,pos,m);
+                vec4.transformMat4(pos,pos,posMat);
 
                 this.positionBuffer.push(pos[0]);
                 this.positionBuffer.push(pos[1]);
@@ -144,13 +96,14 @@ class Object3D extends TransformableWithParent {
 
                 var n = this.surface.getNormal(u,v);
                 var nrm = vec4.fromValues(n[0],n[1],n[2],1.0);
-                m = mat4.create();
-                mat4.mul(m, this.parent.getNormMatrix(), this.normMatrix);
-                vec4.transformMat4(nrm,nrm,m);
+                vec4.transformMat4(nrm,nrm,normMat);
 
-                this.normalBuffer.push(nrm[0]);
-                this.normalBuffer.push(nrm[1]);
-                this.normalBuffer.push(nrm[2]);
+                var normalVec = vec3.fromValues(nrm[0],nrm[1],nrm[2]); 
+                vec3.normalize(normalVec,normalVec);
+
+                this.normalBuffer.push(normalVec[0]);
+                this.normalBuffer.push(normalVec[1]);
+                this.normalBuffer.push(normalVec[2]);
 
             }
         }
@@ -198,9 +151,16 @@ class Object3D extends TransformableWithParent {
 
     }
 
-    draw() {
+    draw(parentPosMat, parentNormMat) {
 
-        let triangleBuffers = this.setupBuffers();
+        super.draw(parentPosMat, parentNormMat);
+
+        var posMat = mat4.create();
+        mat4.mul(posMat, parentPosMat, this.posMatrix);
+        var normMat = mat4.create();
+        mat4.mul(normMat, parentNormMat, this.normMatrix);
+
+        let triangleBuffers = this.setupBuffers(posMat, normMat);
 
         vertexPositionAttribute = gl.getAttribLocation(glProgram, "aVertexPosition");
         gl.enableVertexAttribArray(vertexPositionAttribute);
