@@ -54,9 +54,7 @@ class Transformable {
         mat4.mul(normMat, parentNormMat, this.normMatrix);
 
         this.children.forEach(child => child.draw(posMat,normMat));
-        //for (var i = 0; i < this.children.length; i++) {
-          //  this.children[i].draw(parentPosMat, parentNormMat);
-        //}
+        
     }
 
 
@@ -70,9 +68,6 @@ class Object3D extends Transformable {
     normalBuffer = [];
     indexBuffer = [];
 
-    rows = 50;
-    cols = 50;
-
     constructor(surface, children=[]){
         super(children);
         this.surface = surface;
@@ -80,51 +75,11 @@ class Object3D extends Transformable {
 
     setupBuffers(posMat, normMat) {
 
-        for (var i=0; i <= this.rows; i++) {
-            for (var j=0; j <= this.cols; j++) {
+        this.positionBuffer = this.surface.getPositionBuffer(posMat);
+        this.normalBuffer = this.surface.getNormalBuffer(normMat);
+        this.indexBuffer = this.surface.getIndexBuffer();
 
-                var u = j/this.cols;
-                var v = i/this.rows;
-
-                var p = this.surface.getPosition(u,v);
-                var pos = vec4.fromValues(p[0],p[1],p[2],1.0);
-                vec4.transformMat4(pos,pos,posMat);
-
-                this.positionBuffer.push(pos[0]);
-                this.positionBuffer.push(pos[1]);
-                this.positionBuffer.push(pos[2]);
-
-                var n = this.surface.getNormal(u,v);
-                var nrm = vec4.fromValues(n[0],n[1],n[2],1.0);
-                vec4.transformMat4(nrm,nrm,normMat);
-
-                var normalVec = vec3.fromValues(nrm[0],nrm[1],nrm[2]); 
-                vec3.normalize(normalVec,normalVec);
-
-                this.normalBuffer.push(normalVec[0]);
-                this.normalBuffer.push(normalVec[1]);
-                this.normalBuffer.push(normalVec[2]);
-
-            }
-        }
-
-        for (var i=0; i < this.rows; i++) {
-
-            this.indexBuffer.push(i*(this.cols+1));
-            this.indexBuffer.push((i+1)*(this.cols+1));
-
-            for (var j=0; j < this.cols; j++) {
-                this.indexBuffer.push(i*(this.cols+1)+(j+1));
-                this.indexBuffer.push((i+1)*(this.cols+1)+(j+1));
-            }
-
-            if(i < this.rows - 1){
-               this.indexBuffer.push((i+1)*(this.cols+1)+this.cols);
-               this.indexBuffer.push((i+1)*(this.cols+1));
-            }
-
-        }
-
+        
         let webgl_position_buffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, webgl_position_buffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.positionBuffer), gl.STATIC_DRAW);

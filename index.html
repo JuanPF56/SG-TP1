@@ -65,6 +65,7 @@
 
 
             var mat4=glMatrix.mat4;
+            var vec2=glMatrix.vec2;
             var vec3=glMatrix.vec3;
             var vec4=glMatrix.vec4;
 
@@ -194,7 +195,8 @@
 
                 t += 0.0005;
 
-                object1 = new Object3D(new Sphere);
+                //object1 = new Object3D(new Sphere);
+                object1 = new Object3D(new SweepSurface(new CubicBezier([[1.28411, -0.64205], [1.90692, -0.63564], [1.90692, -0.63564], [1.89889, -0.31782], [1.90692, -0.31782], [1.91495, -0.31782], [2.21671, -0.31782], [2.22474, -0.31782], [2.23277, -0.31782], [2.22474, -0.95346], [2.22474, -0.95346], [2.22474, -0.95346], [1.91495, -1.18782], [1.90692, -1.5891], [1.89889, -1.99038], [2.21671, -2.4591], [2.22474, -2.86038], [2.23277, -3.26166], [2.22474, -3.49602]])));
                 object2 = new Object3D(new Sphere);
                 object3 = new Object3D(new Sphere);
                 group = new Transformable([object2, object3]);
@@ -202,7 +204,7 @@
 
                 object1.scale(0.75);
                 object2.scale(0.5);
-
+                object1.translate(0.0,0.0,1.0);
                 object3.rotateY(Math.PI*2*t*10);
                 object3.translate(0.75,0.0,0.0);
                 object3.scale(0.15);
@@ -210,7 +212,7 @@
                 group.rotateY(Math.PI*2*t*10);
                 group.translate(2.0,0.0,0.0);
 
-                scene.rotateZ(Math.PI*2*t);
+                scene.rotateX(Math.PI*2*t);
 
                 scene.draw(mat4.create(),mat4.create());
 
@@ -220,7 +222,7 @@
 
             function animate(){
                 
-                //rotate_angle += 0.1;
+                //rotate_angle += 0.01;
                 //mat4.identity(modelMatrix);
                 //mat4.rotate(modelMatrix,modelMatrix, rotate_angle, [1.0, 0.0, 1.0]);
 
