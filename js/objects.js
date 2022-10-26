@@ -1,12 +1,10 @@
 class Transformable {
 
     posMatrix;
-    normMatrix;
     children = [];
     
     constructor(children=[]){
         this.posMatrix = mat4.create();
-        this.normMatrix = mat4.create();
         this.children = this.children.concat(children);
     }
 
@@ -19,7 +17,10 @@ class Transformable {
     }
 
     getNormMatrix(){
-        return this.normMatrix;
+        var normMat = mat4.create(); 
+        mat4.invert(normMat, this.posMatrix);
+        mat4.transpose(normMat,normMat);
+        return normMat;
     }
 
     translate(deltaX, deltaY, deltaZ){
@@ -28,22 +29,22 @@ class Transformable {
 
     rotateX(angle){
         mat4.rotateX(this.posMatrix,this.posMatrix,angle);
-        mat4.rotateX(this.normMatrix,this.normMatrix,angle);
+        //mat4.rotateX(this.normMatrix,this.normMatrix,angle);
     }
 
     rotateY(angle){
         mat4.rotateY(this.posMatrix,this.posMatrix,angle);
-        mat4.rotateY(this.normMatrix,this.normMatrix,angle);
+        //mat4.rotateY(this.normMatrix,this.normMatrix,angle);
     }
 
     rotateZ(angle){
         mat4.rotateZ(this.posMatrix,this.posMatrix,angle);
-        mat4.rotateZ(this.normMatrix,this.normMatrix,angle);
+        //mat4.rotateZ(this.normMatrix,this.normMatrix,angle);
     }
 
     scale(scaleFactor){
         mat4.scale(this.posMatrix,this.posMatrix,[scaleFactor,scaleFactor,scaleFactor]);
-        mat4.scale(this.normMatrix,this.normMatrix,[scaleFactor,scaleFactor,scaleFactor]);
+        //mat4.scale(this.normMatrix,this.normMatrix,[scaleFactor,scaleFactor,scaleFactor]);
     }
 
     draw(parentPosMat, parentNormMat){
@@ -51,7 +52,7 @@ class Transformable {
         var posMat = mat4.create();
         mat4.mul(posMat, parentPosMat, this.posMatrix);
         var normMat = mat4.create();
-        mat4.mul(normMat, parentNormMat, this.normMatrix);
+        mat4.mul(normMat, parentNormMat, this.getNormMatrix());
 
         this.children.forEach(child => child.draw(posMat,normMat));
         
@@ -113,7 +114,7 @@ class Object3D extends Transformable {
         var posMat = mat4.create();
         mat4.mul(posMat, parentPosMat, this.posMatrix);
         var normMat = mat4.create();
-        mat4.mul(normMat, parentNormMat, this.normMatrix);
+        mat4.mul(normMat, parentNormMat, this.getNormMatrix());
 
         let triangleBuffers = this.setupBuffers(posMat, normMat);
 

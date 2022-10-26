@@ -77,19 +77,20 @@ class CubicBezier {
         }
         else{
 
-            var i = Math.trunc(u);
-            var t = u - i;
+            //var i = Math.trunc(u);
+            //var t = u - i;
 
-            var p0 = this.controlPoints[0+3*i];
-            var p1 = this.controlPoints[1+3*i];
-            var p2 = this.controlPoints[2+3*i];
-            var p3 = this.controlPoints[3+3*i];
+            //var p0 = this.controlPoints[0+3*i];
+            //var p1 = this.controlPoints[1+3*i];
+            //var p2 = this.controlPoints[2+3*i];
+            //var p3 = this.controlPoints[3+3*i];
 
-            var x = 6*(1-t) * p0[0] + 6*(3*t-2) * p1[0] + 6*(1-3*t) * p2[0] + 6*t * p3[0];
-            var y = 6*(1-t) * p0[1] + 6*(3*t-2) * p1[1] + 6*(1-3*t) * p2[1] + 6*t * p3[1];
+            //var x = 6*(1-t) * p0[0] + 6*(3*t-2) * p1[0] + 6*(1-3*t) * p2[0] + 6*t * p3[0];
+            //var y = 6*(1-t) * p0[1] + 6*(3*t-2) * p1[1] + 6*(1-3*t) * p2[1] + 6*t * p3[1];
             //var z = 6*(1-t) * p0[2] + 6*(3*t-2) * p1[2] + 6*(1-3*t) * p2[2] + 6*t * p3[2];
 
-            var normVec = vec2.fromValues(x,y);
+            var tang = this.getTangent(u);
+            var normVec = vec2.fromValues(-tang[1],tang[0]);
             vec2.normalize(normVec,normVec);
 
             return normVec;
@@ -289,6 +290,7 @@ class SweepSurface extends Surface{
                 positionBuffer.push(pos[2]);
 
 
+
             }
         }
 
@@ -304,7 +306,7 @@ class SweepSurface extends Surface{
             for (var j=0; j < this.cols; j++) {
 
                 var n = this.vectors.normVectors[i];
-                var nrm = vec4.fromValues(n[0],n[1],1,1.0);
+                var nrm = vec4.fromValues(n[0],1.0,n[1],1.0);
                 var m = mat4.create();
                 mat4.rotateZ(m,m,(j*2*Math.PI/this.cols));
                 mat4.mul(m,normMat,m);
@@ -328,7 +330,7 @@ class SweepSurface extends Surface{
 
         var indexBuffer = [];
 
-        for (var i=0; i < this.rows; i++) {
+        for (var i=0; i < this.rows -1; i++) {
 
             indexBuffer.push(i*(this.cols));
             indexBuffer.push((i+1)*(this.cols));
@@ -338,12 +340,14 @@ class SweepSurface extends Surface{
                 indexBuffer.push((i+1)*(this.cols)+(j+1));
             }
 
-            if(i < this.rows - 1){
+            if(i < this.rows - 2){
                indexBuffer.push((i+1)*(this.cols)+this.cols-1);
                indexBuffer.push((i+1)*(this.cols));
             }
 
         }
+
+        indexBuffer.pop();
 
         return indexBuffer;
 
