@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" xmlns:bx="https://boxy-svg.com">
+  <defs>
+    <bx:grid x="0" y="0" width="20.42" height="20.42"/>
+  </defs>
+  <path style="fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0);" d="M -2.252 61.478 L 81.68 61.26 L 81.68 20.42 L 102.1 20.42 L 102.1 81.68 C 102.1 81.68 81.68 122.52 81.68 163.36 C 81.68 204.2 122.52 254.798 122.52 347.14 C 122.52 367.56 122.52 408.825 122.52 408.825"/>
+</svg>

@@ -17,6 +17,7 @@
     	</center>
 
         <script type="text/javascript" src="js/gl-matrix.js"></script>
+        <script type="text/javascript" src="js/jquery.min.js"></script>
         
         <script id="shader-vs" type="x-shader/x-vertex">
 
@@ -58,6 +59,7 @@
             }
         </script>
 
+        <script type="text/javascript" src="js/curves.js"></script>
         <script type="text/javascript" src="js/surfaces.js"></script>
         <script type="text/javascript" src="js/objects.js"></script>
         
@@ -86,9 +88,39 @@
             var viewMatrix = mat4.create();
             var projMatrix = mat4.create();
             var normalMatrix = mat4.create();
-            var rotate_angle = -1.57078;
-            var t = 0;
+
+            var previousClientX = 0;
+            var previousClientY = 0;
+            var ratio = 5;
+            var alpha = 0;
+            var beta = Math.PI/2;
+            var speedFactor = 0.01;
+
+            var isMouseDown = false;
+            var actualEvent;
+
+            var mouse = {x: 0, y: 0};
+
+            $('body').mousemove(function(e){ 
+                mouse.x = e.clientX || e.pageX; 
+                mouse.y = e.clientY || e.pageY 
+            });
             
+            $('body').mousedown(function(event){       
+                isMouseDown = true;        
+            });
+
+            $('body').mouseup(function(event){
+                isMouseDown = false;        
+            });     
+
+            $('body').bind('mousewheel DOMMouseScroll', function(event){
+                if(event.originalEvent.wheelDelta < 0){
+                    ratio += 0.5;
+                }else if (ratio > 1){
+                    ratio -= 0.5;
+                }
+            });   
 
          
             function initWebGL(){
@@ -131,10 +163,7 @@
                 mat4.perspective(projMatrix,45, canvas.width / canvas.height, 0.1, 100.0);
                 
                 mat4.identity(modelMatrix);
-                mat4.rotate(modelMatrix,modelMatrix, -1.57078, [1.0, 0.0, 0.0]);
-
                 mat4.identity(viewMatrix);
-                mat4.translate(viewMatrix,viewMatrix, [0.0, 0.0, -5.0]);
 
             }
                     
@@ -187,44 +216,92 @@
                 gl.uniformMatrix4fv(viewMatrixUniform, false, viewMatrix);
                 gl.uniformMatrix4fv(projMatrixUniform, false, projMatrix);
                 gl.uniformMatrix4fv(normalMatrixUniform, false, normalMatrix);
-            }                  
+            } 
+        
+            async function readSVGpath(name){
+
+                var parser = new DOMParser();
+                var path;
+
+                let response = await fetch("./svg/"+name+".svg");
+
+                if(response.status != 200) {
+                    throw new Error("Couldn't get file");
+                }
+
+                let textData = await response.text();
+
+                path = parser.parseFromString(textData, "text/xml").getElementsByTagName("path")[0].getAttribute("d");
+
+                var pointData = path.split(' ');
+                var controlPoints = [];
+
+                for(var i=1; i < pointData.length; i++){
+                    if(pointData[i] == "L"){
+                        controlPoints.push([pointData[i-2]/100,pointData[i-1]/100]);
+                        controlPoints.push([pointData[i-2]/100,pointData[i-1]/100]);
+                        controlPoints.push([pointData[i+1]/100,pointData[i+2]/100]);
+                    }
+                    else if(pointData[i] == "C"){
+                        controlPoints.push([pointData[i-2]/100,pointData[i-1]/100]);
+                        controlPoints.push([pointData[i+1]/100,pointData[i+2]/100]);
+                        controlPoints.push([pointData[i+3]/100,pointData[i+4]/100]);
+                    }
+                    else if(i == pointData.length - 2){
+                        controlPoints.push([pointData[i]/100,pointData[i+1]/100]);
+                    }
+                }
+
+                return controlPoints;
+
+            }
             
-            function drawScene(){
+            async function drawScene(){
 
                 setupVertexShaderMatrix();
 
-                t += 0.001;
+                torre = new Object3D(new RevolutionSurface(new CubicBezier2D(await readSVGpath("torre")), 50));
 
-                //object1 = new Object3D(new Sphere);
-                object1 = new Object3D(new SweepSurface(new CubicBezier([[1.0, -0.6],[1.9, -0.6], [1.9, -0.6], [1.9, -0.6], [1.8, -0.3], [1.8, -0.3], [1.91495, -0.31782], [2.21671, -0.31782], [2.22474, -0.31782], [2.23277, -0.31782], [2.22474, -0.95346], [2.22474, -0.95346], [2.22474, -0.95346], [1.91495, -1.18782], [1.90692, -1.5891], [1.89889, -1.99038], [2.21671, -2.4591], [2.22474, -2.86038], [2.23277, -3.26166]])));
-                object2 = new Object3D(new Sphere);
-                object3 = new Object3D(new Sphere);
-                group = new Transformable([object2, object3]);
-                scene = new Transformable([object1, group]);
+                torre.scale(0.5);
 
-                object1.scale(0.25);
-                object2.scale(0.1);
-                object1.translate(0.0,0.0,1.0);
-                object3.rotateY(Math.PI*2*t*10);
-                object3.translate(0.5,0.0,0.0);
-                object3.scale(0.15);
-                
-                group.rotateY(Math.PI*2*t*10);
-                group.translate(2.0,0.0,0.0);
-
-                scene.rotateX(Math.PI*2*t);
-
-                scene.draw(mat4.create(),mat4.create());
+                torre.draw(mat4.create(),mat4.create());
 
             }
 
  
 
-            function animate(){
-                
-                //rotate_angle += 0.01;
-                //mat4.identity(modelMatrix);
-                //mat4.rotate(modelMatrix,modelMatrix, rotate_angle, [1.0, 0.0, 1.0]);
+            function controls(){
+
+                var deltaX=0;
+                var deltaY=0;
+
+                if(isMouseDown){
+
+                    if (previousClientX) deltaX = mouse.x - previousClientX;
+                    if (previousClientY) deltaY = mouse.y - previousClientY;
+
+                    previousClientX = mouse.x;
+                    previousClientY = mouse.y;
+
+                    alpha = alpha + deltaX * speedFactor;
+                    beta = beta + deltaY * speedFactor;
+
+                    if (beta<Math.PI/2) beta=Math.PI/2;
+                    if (beta>Math.PI) beta=Math.PI;
+
+                    
+                    $('#valorDeltaX').html(deltaX);
+                    $('#valorDeltaY').html(deltaY);
+
+                    $('#valorAlpha').html(alpha.toFixed(2));
+                    $('#valorBeta').html(beta.toFixed(2));
+
+                }
+
+                mat4.identity(viewMatrix);
+                mat4.translate(viewMatrix,viewMatrix,[0,0, -ratio]);
+                mat4.rotateX(viewMatrix,viewMatrix, beta);
+                mat4.rotateZ(viewMatrix,viewMatrix, alpha);
 
                 mat4.identity(normalMatrix);
                 mat4.multiply(normalMatrix,viewMatrix,modelMatrix);
@@ -237,7 +314,7 @@
 
                 requestAnimationFrame(tick);
                 drawScene();
-                animate();
+                controls();
             }
 
             window.onload=initWebGL;

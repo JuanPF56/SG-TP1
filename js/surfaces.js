@@ -1,148 +1,3 @@
-class CubicBezier {
-
-    controlPoints = [];
-
-    constructor(controlPoints){
-        this.controlPoints = controlPoints;
-        var first = controlPoints[0];
-        for (var i = 0; i < this.controlPoints.length; i++){
-            controlPoints[i] = [controlPoints[i][0]-first[0], controlPoints[i][1]-first[1]];
-        }
-    }
-
-    getSections(){
-        return (this.controlPoints.length - 1)/3;
-    }
-
-
-    getPosition(u){
-
-        if(u >= this.getSections()){
-            throw 'Not enough sections!';
-        }
-        else{
-
-            var i = Math.trunc(u);
-            var t = u - i;
-
-            var p0 = this.controlPoints[0+3*i];
-            var p1 = this.controlPoints[1+3*i];
-            var p2 = this.controlPoints[2+3*i];
-            var p3 = this.controlPoints[3+3*i];
-
-            var x = ((1-t)**3) * p0[0] + 3*t*((1-t)**2) * p1[0] + 3*(t**2)*(1-t) * p2[0] + (t**3) * p3[0];
-            var y = ((1-t)**3) * p0[1] + 3*t*((1-t)**2) * p1[1] + 3*(t**2)*(1-t) * p2[1] + (t**3) * p3[1];
-            //var z = ((1-t)**3) * p0[2] + 3*t*((1-t)**2) * p1[2] + 3*(t**2)*(1-t) * p2[2] + (t**3) * p3[2];
-
-            var posVec = vec2.fromValues(x,y);
-
-            return posVec;
-
-        }
-
-    }
-
-    getTangent(u){
-
-        if(u >= this.getSections()){
-            throw 'Not enough sections!';
-        }
-        else{
-
-            var i = Math.trunc(u);
-            var t = u - i;
-
-            var p0 = this.controlPoints[0+3*i];
-            var p1 = this.controlPoints[1+3*i];
-            var p2 = this.controlPoints[2+3*i];
-            var p3 = this.controlPoints[3+3*i];
-
-            var x = -3*((1-t)**2) * p0[0] + 3*(3*(t**2)-4*t+1) * p1[0] + 3*(2-3*t)*t * p2[0] + 3*(t**2) * p3[0];
-            var y = -3*((1-t)**2) * p0[1] + 3*(3*(t**2)-4*t+1) * p1[1] + 3*(2-3*t)*t * p2[1] + 3*(t**2) * p3[1];
-            //var z = -3*((1-t)**2) * p0[2] + 3*(3*(t**2)-4*t+1) * p1[2] + 3*(2-3*t)*t * p2[2] + 3*(t**2) * p3[2];
-
-            var tangVec = vec2.fromValues(x,y);
-            vec2.normalize(tangVec,tangVec);
-
-            return tangVec;
-
-        }
-
-    }
-
-    getNormal(u){
-
-        if(u >= this.getSections()){
-            throw 'Not enough sections!';
-        }
-        else{
-
-            //var i = Math.trunc(u);
-            //var t = u - i;
-
-            //var p0 = this.controlPoints[0+3*i];
-            //var p1 = this.controlPoints[1+3*i];
-            //var p2 = this.controlPoints[2+3*i];
-            //var p3 = this.controlPoints[3+3*i];
-
-            //var x = 6*(1-t) * p0[0] + 6*(3*t-2) * p1[0] + 6*(1-3*t) * p2[0] + 6*t * p3[0];
-            //var y = 6*(1-t) * p0[1] + 6*(3*t-2) * p1[1] + 6*(1-3*t) * p2[1] + 6*t * p3[1];
-            //var z = 6*(1-t) * p0[2] + 6*(3*t-2) * p1[2] + 6*(1-3*t) * p2[2] + 6*t * p3[2];
-
-            var tang = this.getTangent(u);
-            var normVec = vec2.fromValues(-tang[1],tang[0]);
-            vec2.normalize(normVec,normVec);
-
-            return normVec;
-
-        }
-
-    }
-
-}
-
-class CurveSampler {
-
-    curve;
-
-    constructor(curve){
-        this.curve = curve;
-    }
-
-    samplePoints(pointsPerSection){
-
-        var sections = this.curve.getSections();
-
-        var posVectors = [];
-        var tangVectors = [];
-        var normVectors = [];
-
-        for(var i = 0; i < sections; i++){
-            for(var k = 0; k < pointsPerSection; k++){
-
-                var posVec = this.curve.getPosition(i+k/pointsPerSection);
-                var tangVec = this.curve.getTangent(i+k/pointsPerSection);
-                var normVec = this.curve.getNormal(i+k/pointsPerSection);
-
-                posVectors.push(posVec);
-                tangVectors.push(tangVec);
-                normVectors.push(normVec);
-
-            }
-        }
-
-        return {
-            posVectors,
-            tangVectors,
-            normVectors
-        }
-
-    }
-
-
-
-}
-
 class Surface {
 
     rows = 50;
@@ -258,17 +113,17 @@ class Surface {
 
 }
 
-class SweepSurface extends Surface{
+class RevolutionSurface extends Surface{
 
     curveSampler;
     vectors;
 
-    constructor(curve){
+    constructor(curve,cols){
         super();
         this.curveSampler = new CurveSampler(curve);
         this.vectors = this.curveSampler.samplePoints(10);
         this.rows = this.vectors.posVectors.length;
-        this.cols = 50;
+        this.cols = cols;
     }
 
     getPositionBuffer(posMat){
@@ -279,7 +134,7 @@ class SweepSurface extends Surface{
             for (var j=0; j < this.cols; j++) {
 
                 var p = this.vectors.posVectors[i];
-                var pos = vec4.fromValues(p[0],0,p[1],1.0);
+                var pos = vec4.fromValues(p[0],0.0,p[1],1.0);
                 var m = mat4.create();
                 mat4.rotateZ(m,m,(j*2*Math.PI/this.cols));
                 mat4.mul(m,posMat,m);
@@ -306,7 +161,7 @@ class SweepSurface extends Surface{
             for (var j=0; j < this.cols; j++) {
 
                 var n = this.vectors.normVectors[i];
-                var nrm = vec4.fromValues(n[0],1.0,n[1],1.0);
+                var nrm = vec4.fromValues(n[0],0.0,n[1],1.0);
                 var m = mat4.create();
                 mat4.rotateZ(m,m,(j*2*Math.PI/this.cols));
                 mat4.mul(m,normMat,m);
@@ -330,7 +185,7 @@ class SweepSurface extends Surface{
 
         var indexBuffer = [];
 
-        for (var i=0; i < this.rows -1; i++) {
+        for (var i=0; i < this.rows - 1; i++) {
 
             indexBuffer.push(i*(this.cols));
             indexBuffer.push((i+1)*(this.cols));
