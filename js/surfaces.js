@@ -129,12 +129,14 @@ class RevolutionSurface extends Surface{
     getPositionBuffer(posMat){
 
         var positionBuffer = [];
+        var first = this.vectors.first;
+        var last = this.vectors.last;
         
         for (var i=0; i < this.rows; i++) {
             for (var j=0; j < this.cols; j++) {
 
                 var p = this.vectors.posVectors[i];
-                var pos = vec4.fromValues(p[0],0.0,p[1],1.0);
+                var pos = vec4.fromValues(p[0]-first[0],0.0,p[1]-last[1],1.0);
                 var m = mat4.create();
                 mat4.rotateZ(m,m,(j*2*Math.PI/this.cols));
                 mat4.mul(m,posMat,m);
@@ -143,8 +145,6 @@ class RevolutionSurface extends Surface{
                 positionBuffer.push(pos[0]);
                 positionBuffer.push(pos[1]);
                 positionBuffer.push(pos[2]);
-
-
 
             }
         }
@@ -220,7 +220,9 @@ class SweepSurface extends Surface{
     scaleFactor;
     rotationFactor;
 
-    constructor(shapeCurve,pathCurve,shapeSampleRate,pathSampleRate,scaleFactor = 0,rotationFactor = 0){
+    closed;
+
+    constructor(shapeCurve,pathCurve,shapeSampleRate,pathSampleRate,scaleFactor = 0,rotationFactor = 0,closed=true){
         super();
         this.shapeCurve = new CurveSampler(shapeCurve);
         this.pathCurve = new CurveSampler(pathCurve);
@@ -230,6 +232,7 @@ class SweepSurface extends Surface{
         this.cols = this.pathVectors.posVectors.length;
         this.scaleFactor = scaleFactor;
         this.rotationFactor = rotationFactor;
+        this.closed = closed;
     }
 
     getPositionBuffer(posMat){
@@ -237,6 +240,8 @@ class SweepSurface extends Surface{
         var positionBuffer = [];
         
         for (var i=0; i < this.cols; i++) {
+
+            var center = this.shapeVectors.center;
 
             var ppPos = this.pathVectors.posVectors[i];
             var ppTan = this.pathVectors.tangVectors[i];
@@ -247,17 +252,17 @@ class SweepSurface extends Surface{
             var pos;
             // matriz de nivel:
             var levelDeformation = mat4.create();
-            mat4.rotateZ(levelDeformation,levelDeformation,i*this.rotationFactor);
+            mat4.rotateZ(levelDeformation,levelDeformation,(i/(this.cols-1))*2*Math.PI*this.rotationFactor);
             mat4.scale(levelDeformation,levelDeformation,[(i*this.scaleFactor+1),(i*this.scaleFactor+1),(i*this.scaleFactor+1)]);
             var m = mat4.fromValues(ppNorm[0],ppNorm[1],0,0,ppBiNorm[0],ppBiNorm[1],ppBiNorm[2],0,ppTan[0],ppTan[1],0,0,ppPos[0],ppPos[1],0,1);
             mat4.mul(m,m,levelDeformation);
             mat4.mul(m,posMat,m);
 
+    
             //Tapa 1
 
-            if(i == 0){
+            if(i == 0 && this.closed){
                 for (var j=0; j < this.rows; j++) {
-                    var center = this.shapeVectors.center;
                     pos = vec4.fromValues(0,0,0,1);
                     vec4.transformMat4(pos,pos,m);
                     positionBuffer.push(pos[0]);
@@ -270,7 +275,7 @@ class SweepSurface extends Surface{
             for (var j=0; j < this.rows; j++) {
                 
                 var sp = this.shapeVectors.posVectors[j];
-                pos = vec4.fromValues(sp[0]-center[0],sp[1]-center[1],0.0,1);                
+                pos = vec4.fromValues(sp[0]-center[0],sp[1]+center[1],0.0,1);                
                 vec4.transformMat4(pos,pos,m);
 
                 positionBuffer.push(pos[0]);
@@ -281,9 +286,8 @@ class SweepSurface extends Surface{
 
             //Tapa 2
 
-            if (i == this.cols - 1){
+            if (i == this.cols - 1 && this.closed){
                 for (var j=0; j < this.rows; j++) {
-                    var center = this.shapeVectors.center;
                     pos = vec4.fromValues(0,0,0,1);
                     vec4.transformMat4(pos,pos,m);
                     positionBuffer.push(pos[0]);
@@ -304,6 +308,8 @@ class SweepSurface extends Surface{
 
         for (var i=0; i < this.cols; i++) {
 
+            var center = this.shapeVectors.center;
+
             var ppPos = this.pathVectors.posVectors[i];
             var ppTan = this.pathVectors.tangVectors[i];
             var ppNorm = this.pathVectors.normVectors[i];
@@ -313,7 +319,7 @@ class SweepSurface extends Surface{
             var nrm;
             // matriz de nivel:
             var levelDeformation = mat4.create();
-            mat4.rotateZ(levelDeformation,levelDeformation,i*this.rotationFactor);
+            mat4.rotateZ(levelDeformation,levelDeformation,(i/(this.cols-1))*2*Math.PI*this.rotationFactor);
             mat4.scale(levelDeformation,levelDeformation,[(i*this.scaleFactor+1),(i*this.scaleFactor+1),(i*this.scaleFactor+1)]);
             var m = mat4.fromValues(ppNorm[0],ppNorm[1],0,0,ppBiNorm[0],ppBiNorm[1],ppBiNorm[2],0,ppTan[0],ppTan[1],0,0,ppPos[0],ppPos[1],0,1);
             mat4.mul(m,m,levelDeformation);
@@ -321,9 +327,8 @@ class SweepSurface extends Surface{
             mat4.transpose(m,m);
             mat4.mul(m,normMat,m);
 
-            if(i == 0 ){
+            if(i == 0 && this.closed){
                 for (var j=0; j < this.rows; j++) {
-                    var center = this.shapeVectors.center;
                     nrm = vec4.fromValues(0,0,-1,1);
                     vec4.transformMat4(nrm,nrm,m);
 
@@ -353,9 +358,8 @@ class SweepSurface extends Surface{
 
             }
 
-            if( i == this.cols - 1){
+            if( i == this.cols - 1 && this.closed){
                 for (var j=0; j < this.rows; j++) {
-                    var center = this.shapeVectors.center;
                     nrm = vec4.fromValues(0,0,1,1);
                     vec4.transformMat4(nrm,nrm,m);
 
@@ -378,7 +382,11 @@ class SweepSurface extends Surface{
 
         var indexBuffer = [];
 
-        for (var i=0; i <= this.cols; i++) {
+        var a = -2;
+
+        if (this.closed){a=0;}
+
+        for (var i=0; i < this.cols + 1 + a; i++) {
 
             indexBuffer.push(i*(this.rows));
             indexBuffer.push((i+1)*(this.rows));

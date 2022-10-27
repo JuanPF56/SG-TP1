@@ -67,11 +67,11 @@
 
         <path id="terrenoPath" d="M -18.919 75.676 C -18.919 75.676 94.595 75.676 123.917 75.676 C 132.433 75.676 132.433 56.757 140.085 56.757 C 208.109 56.757 500.751 56.757 500.751 56.757"/>
         <path id="torrePath" d="M 0 52.251 L 81.68 52.251 L 81.68 20.42 L 102.1 20.42 C 102.1 20.42 102.1 61.26 102.1 81.68 C 102.1 103.205 81.68 102.1 81.68 142.94 C 81.68 183.78 142.94 305.999 142.94 398.341 C 142.94 418.761 142.94 458.375 142.94 458.375"/>
-        <path id="murallaPath" d="M 81.68 448.822 C 81.68 448.822 81.68 409.282 81.68 389.513 C 81.68 297.165 142.94 174.645 142.94 133.805 C 142.94 133.805 142.94 92.965 142.94 92.965 L 183.78 92.965 L 183.78 133.805 L 306.3 133.805 L 306.3 92.965 L 347.14 92.965 L 347.14 133.805 C 347.14 174.645 408.4 296.864 408.4 389.206 C 408.4 409.626 408.4 449.24 408.4 449.24"/>
+        <path id="murallaPath" d="M 0 268.216 C 0 167.635 33.527 100.581 33.527 33.527 L 33.527 0 L 67.054 0 L 67.054 33.527 L 134.108 33.527 L 201.162 33.527 L 201.162 0 L 234.689 0 L 234.689 33.527 C 234.689 100.581 268.216 167.635 268.216 268.216 Z"/>
         <path id="torreCPath" d="M 0 0 L 61.746 0 C 61.746 0 61.594 81.68 61.594 122.52 C 61.594 135.432 41.52 141.9 41.174 163.36 C 40.423 209.907 41.174 449.24 41.174 449.24"/>
         <path id="techoTCPath" d="M 0 0 C 0 0 0.009 84.835 72.081 141.892 C 31.241 141.892 0 141.891 0 141.891"/>
-        <path id="ventanaPath" d="M 40.09 203.45 C 40.09 203.45 40.09 101.35 40.09 60.51 C 40.09 50.246 60.51 19.67 101.35 19.67 C 142.19 19.67 162.61 51.748 162.61 60.51 C 162.61 101.35 162.61 203.45 162.61 203.45 L 40.09 203.45 Z"/>
-        <path id="circuloPath" d="M 300 200 C 300 255.228 255.228 300 200 300 C 144.771 300 100 255.228 100 200 C 100 144.771 144.771 100 200 100 C 255.228 100 300 144.771 300 200 Z"/>
+        <path id="ventanaPath" d="M 0 150 L 0 50 C 0 35 10 0 50 0 C 90 0 100 35 100 50 C 100 100 100 150 100 150 L 0 150 Z"/>
+        <path id="circuloPath" d="M 200 100 C 200 155.228 155.228 200 100 200 C 44.771 200 0 155.228 0 100 C 0 44.771 44.771 0 100 0 C 155.228 0 200 44.771 200 100 Z"/>
         <path id="cuadradoPath" d="M 100 300 C 100 300 100 100 100 100 C 100 100 300 100 300 100 L 300 300 L 100 300 Z"/>
         
         <script>
@@ -269,10 +269,9 @@
                 setupVertexShaderMatrix();
                 controls();
 
-                prueba = new Object3D(new SweepSurface(new CubicBezier2D(readSVGpath("ventana")),new CubicBezier2D([[-5,0],[-0.5,0],[0.5,0],[5,0]]),10,20,0.1,0.2));
-                //prueba = new Object3D(new SweepSurface(new CubicBezier2D(readSVGpath("ventana")),new CubicBezier2D([ [1,4.5] , [2,1] , [6,1] , [7,4.5] ]),5,10));
-
-                //origen = new Object3D(new Sphere());
+                prueba = new Wall();
+                prueba2 = new Cylinder();
+                origen = new Object3D(new Sphere());
 
                 torre1 = new Tower();
                 torre2 = new TowerC();
@@ -284,10 +283,10 @@
                 torre8 = new Object3D(new RevolutionSurface(new CubicBezier2D(readSVGpath("torre")), 10, 20));
                 torres = new Transformable([torre1,torre2,torre3,torre4,torre5,torre6,torre7,torre8]);
                 terreno = new Terrain([torres]);
-                scene = new Transformable([terreno, prueba]);
+                scene = new Transformable([terreno, origen, prueba, prueba2]);
 
                 torres.scale(0.12);
-                torre1.translate(0,0,5);
+                torre1.translate(0,0,0);
                 torre2.translate(-3,-6,0);
                 torre3.translate(-6,-3,0);
                 torre4.translate(-6,3,0);
@@ -297,7 +296,9 @@
                 torre8.translate(6,-3,0);
 
                 prueba.scale(0.1);
-                //origen.scale(0.01);
+                prueba2.scale(0.2);
+                prueba2.translate(0,0,2);
+                origen.scale(0.01);
 
                 scene.translate(0,0,-0.3);
 
