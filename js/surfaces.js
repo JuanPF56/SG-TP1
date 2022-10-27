@@ -118,10 +118,10 @@ class RevolutionSurface extends Surface{
     curveSampler;
     vectors;
 
-    constructor(curve,cols){
+    constructor(curve,sampleRate,cols){
         super();
         this.curveSampler = new CurveSampler(curve);
-        this.vectors = this.curveSampler.samplePoints(10);
+        this.vectors = this.curveSampler.samplePoints(sampleRate);
         this.rows = this.vectors.posVectors.length;
         this.cols = cols;
     }
@@ -203,6 +203,188 @@ class RevolutionSurface extends Surface{
         }
 
         indexBuffer.pop();
+
+        return indexBuffer;
+
+    }
+
+}
+
+class SweepSurface extends Surface{
+
+    shapeCurve;
+    pathCurve;
+    shapeVectors;
+    pathVectors;
+
+    constructor(shapeCurve,pathCurve,shapeSampleRate,pathSampleRate){
+        super();
+        this.shapeCurve = new CurveSampler(shapeCurve);
+        this.pathCurve = new CurveSampler(pathCurve);
+        this.shapeVectors = this.shapeCurve.samplePoints(shapeSampleRate);
+        this.pathVectors = this.pathCurve.samplePoints(pathSampleRate)
+        this.rows = this.shapeVectors.posVectors.length;
+        this.cols = this.pathVectors.posVectors.length;
+    }
+
+    getPositionBuffer(posMat){
+
+        var positionBuffer = [];
+        
+        for (var i=0; i < this.cols; i++) {
+
+            var ppPos = this.pathVectors.posVectors[i];
+            var ppTan = this.pathVectors.tangVectors[i];
+            var ppNorm = this.pathVectors.normVectors[i];
+            var ppBiNorm = vec3.create();
+            vec3.cross(ppBiNorm,vec3.fromValues(ppTan[0],ppTan[1],0),vec3.fromValues(ppNorm[0],ppNorm[1],0));
+
+            var pos;
+            // matriz de nivel:
+            var m = mat4.fromValues(ppNorm[0],ppNorm[1],0,0,ppBiNorm[0],ppBiNorm[1],ppBiNorm[2],0,ppTan[0],ppTan[1],0,0,ppPos[0],ppPos[1],0,1);
+            mat4.mul(m,posMat,m);
+
+            //Tapa 1
+
+            if(i == 0){
+                for (var j=0; j < this.rows; j++) {
+                    var center = this.shapeVectors.center;
+                    pos = vec4.fromValues(center[0],center[1],0.0,1.0);
+                    vec4.transformMat4(pos,pos,m);
+                    positionBuffer.push(pos[0]);
+                    positionBuffer.push(pos[1]);
+                    positionBuffer.push(pos[2]);
+                }
+            }      
+
+
+            for (var j=0; j < this.rows; j++) {
+                
+                var sp = this.shapeVectors.posVectors[j];
+                pos = vec4.fromValues(sp[0],sp[1],0.0,1.0);                
+                      
+                vec4.transformMat4(pos,pos,m);
+
+                positionBuffer.push(pos[0]);
+                positionBuffer.push(pos[1]);
+                positionBuffer.push(pos[2]);
+
+            }
+
+            //Tapa 2
+
+            if (i == this.cols - 1){
+                for (var j=0; j < this.rows; j++) {
+                    var center = this.shapeVectors.center;
+                    pos = vec4.fromValues(center[0],center[1],0.0,1.0);
+                    vec4.transformMat4(pos,pos,m);
+                    positionBuffer.push(pos[0]);
+                    positionBuffer.push(pos[1]);
+                    positionBuffer.push(pos[2]);
+                }
+            }  
+
+        }
+
+        return positionBuffer;
+
+    }
+
+    getNormalBuffer(normMat){
+
+        var normalBuffer = [];
+
+        for (var i=0; i < this.cols; i++) {
+
+            var ppPos = this.pathVectors.posVectors[i];
+            var ppTan = this.pathVectors.tangVectors[i];
+            var ppNorm = this.pathVectors.normVectors[i];
+            var ppBiNorm = vec3.create();
+            vec3.cross(ppBiNorm,vec3.fromValues(ppTan[0],ppTan[1],0),vec3.fromValues(ppNorm[0],ppNorm[1],0));
+
+            var nrm;
+            // matriz de nivel:
+            var m = mat4.fromValues(ppNorm[0],ppNorm[1],0,0,ppBiNorm[0],ppBiNorm[1],ppBiNorm[2],0,ppTan[0],ppTan[1],0,0,ppPos[0],ppPos[1],0,1);
+            mat4.invert(m,m);
+            mat4.transpose(m,m);
+            mat4.mul(m,normMat,m);
+
+            if(i == 0 ){
+                for (var j=0; j < this.rows; j++) {
+                    var center = this.shapeVectors.center;
+                    nrm = vec4.fromValues(center[0],center[1],-1.0,1.0);
+                    vec4.transformMat4(nrm,nrm,m);
+
+                    var normalVec = vec3.fromValues(nrm[0],nrm[1],nrm[2]); 
+                    vec3.normalize(normalVec,normalVec);
+
+                    normalBuffer.push(normalVec[0]);
+                    normalBuffer.push(normalVec[1]);
+                    normalBuffer.push(normalVec[2]);
+                }
+            }
+
+            for (var j=0; j < this.rows; j++) {
+
+                          
+                var n = this.shapeVectors.normVectors[j];
+                var nrm = vec4.fromValues(n[0],n[1],0.0,1.0);
+                
+                vec4.transformMat4(nrm,nrm,m);
+
+                var normalVec = vec3.fromValues(nrm[0],nrm[1],nrm[2]); 
+                vec3.normalize(normalVec,normalVec);
+
+                normalBuffer.push(normalVec[0]);
+                normalBuffer.push(normalVec[1]);
+                normalBuffer.push(normalVec[2]);
+
+            }
+
+            if( i == this.cols - 1){
+                for (var j=0; j < this.rows; j++) {
+                    var center = this.shapeVectors.center;
+                    nrm = vec4.fromValues(center[0],center[1],1.0,1.0);
+                    vec4.transformMat4(nrm,nrm,m);
+
+                    var normalVec = vec3.fromValues(nrm[0],nrm[1],nrm[2]); 
+                    vec3.normalize(normalVec,normalVec);
+
+                    normalBuffer.push(normalVec[0]);
+                    normalBuffer.push(normalVec[1]);
+                    normalBuffer.push(normalVec[2]);
+                }
+
+            }
+        }
+
+        return normalBuffer;
+
+    }
+
+    getIndexBuffer(){
+
+        var indexBuffer = [];
+
+        for (var i=0; i <= this.cols; i++) {
+
+            indexBuffer.push(i*(this.rows));
+            indexBuffer.push((i+1)*(this.rows));
+
+            for (var j=0; j < this.rows; j++) {
+                indexBuffer.push(i*(this.rows)+(j+1));
+                indexBuffer.push((i+1)*(this.rows)+(j+1));
+            }
+
+            if(i < this.cols - 2){
+               indexBuffer.push((i+1)*(this.rows)+this.rows-1);
+               indexBuffer.push((i+1)*(this.rows));
+            }
+
+        }
+
+        indexBuffer.pop();
+
 
         return indexBuffer;
 

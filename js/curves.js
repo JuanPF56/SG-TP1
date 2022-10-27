@@ -10,6 +10,10 @@ class CubicBezier2D {
         }
     }
 
+    getCenter(){
+        return this.center;
+    }
+
     getSections(){
         return (this.controlPoints.length - 1)/3;
     }
@@ -71,7 +75,7 @@ class CubicBezier2D {
     getNormal(u){
 
         var tang = this.getTangent(u);
-        var normVec = vec2.fromValues(tang[1],-tang[0]);
+        var normVec = vec2.fromValues(-tang[1],tang[0]);
         vec2.normalize(normVec,normVec);
 
         return normVec;
@@ -79,6 +83,8 @@ class CubicBezier2D {
     }
 
 }
+
+/**
 
 class CubicBezier3D {
 
@@ -158,16 +164,20 @@ class CubicBezier3D {
             var i = Math.trunc(u);
             var t = u - i;
 
-            var p0 = this.controlPoints[0+3*i];
-            var p1 = this.controlPoints[1+3*i];
-            var p2 = this.controlPoints[2+3*i];
-            var p3 = this.controlPoints[3+3*i];
+            //var p0 = this.controlPoints[0+3*i];
+            //var p1 = this.controlPoints[1+3*i];
+            //var p2 = this.controlPoints[2+3*i];
+            //var p3 = this.controlPoints[3+3*i];
 
-            var x = 6*(1-t) * p0[0] + 6*(3*t-2) * p1[0] + 6*(1-3*t) * p2[0] + 6*t * p3[0];
-            var y = 6*(1-t) * p0[1] + 6*(3*t-2) * p1[1] + 6*(1-3*t) * p2[1] + 6*t * p3[1];
-            var z = 6*(1-t) * p0[2] + 6*(3*t-2) * p1[2] + 6*(1-3*t) * p2[2] + 6*t * p3[2];
+            //var x = 6*(1-t) * p0[0] + 6*(3*t-2) * p1[0] + 6*(1-3*t) * p2[0] + 6*t * p3[0];
+            //var y = 6*(1-t) * p0[1] + 6*(3*t-2) * p1[1] + 6*(1-3*t) * p2[1] + 6*t * p3[1];
+            //var z = 6*(1-t) * p0[2] + 6*(3*t-2) * p1[2] + 6*(1-3*t) * p2[2] + 6*t * p3[2];
 
-            var normVec = vec3.fromValues(x,y,z);
+            var tan1 = this.getTangent(u);
+            var tan2 = this.getTangent(u+0.001);
+
+            var normVec = vec3.fromValues(0,0,0);
+            vec3.cross(normVec, tan1, tan2);
             vec3.normalize(normVec,normVec);
 
             return normVec;
@@ -194,6 +204,8 @@ class CubicBezier3D {
 
 
 }
+**/
+
 
 class CurveSampler {
 
@@ -218,10 +230,12 @@ class CurveSampler {
                 var posVec = this.curve.getPosition(i+k/pointsPerSection);
                 var tangVec = this.curve.getTangent(i+k/pointsPerSection);
                 var normVec = this.curve.getNormal(i+k/pointsPerSection);
-                if(this.curve instanceof CubicBezier3D){
-                    var biNormVec = this.curve.getNormal(i+k/pointsPerSection);
-                    biNormVectors.push(biNormVec);
-                }
+                //if(this.curve instanceof CubicBezier3D){
+                //    var biNormVec = vec3.fromValues(1,1,1);
+                //    vec3.cross(biNormVec, normVec, tangVec);
+                //    vec3.normalize(biNormVec,biNormVec);
+                //    biNormVectors.push(biNormVec);
+                //}
 
                 posVectors.push(posVec);
                 tangVectors.push(tangVec);
@@ -230,11 +244,22 @@ class CurveSampler {
             }
         }
 
+
+        var center = [0,0];
+        for (var i = 0; i < posVectors.length; i++){
+            center[0] += posVectors[i][0];
+            center[1] += posVectors[i][1];
+        }
+
+        center[0] = center[0]/posVectors.length;
+        center[1] = center[1]/posVectors.length;
+
         return {
             posVectors,
             tangVectors,
             normVectors,
-            biNormVectors
+            center,
+            //biNormVectors
         }
 
     }
