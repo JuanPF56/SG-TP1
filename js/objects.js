@@ -127,7 +127,31 @@ class Object3D extends Transformable {
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, triangleBuffers.webgl_index_buffer);
         gl.drawElements(gl.TRIANGLE_STRIP, triangleBuffers.webgl_index_buffer.numItems, gl.UNSIGNED_SHORT, 0);
 
-        
     }
 
 }
+
+class Terrain extends Object3D{
+
+    constructor(children=[]){
+        super(new RevolutionSurface(new CubicBezier2D(readSVGpath("terreno")), 10, 20), children);
+    }
+
+}
+
+class Tower extends Object3D{
+
+    constructor(children=[]){
+        super(new RevolutionSurface(new CubicBezier2D(readSVGpath("torre")), 10, 20), children);
+    }
+
+}
+
+class TowerC extends Object3D{
+
+    constructor(children=[]){
+        super(new RevolutionSurface(new CubicBezier2D(readSVGpath("torreC")), 10, 20), children);
+    }
+
+}
+

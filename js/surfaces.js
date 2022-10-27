@@ -217,7 +217,10 @@ class SweepSurface extends Surface{
     shapeVectors;
     pathVectors;
 
-    constructor(shapeCurve,pathCurve,shapeSampleRate,pathSampleRate){
+    scaleFactor;
+    rotationFactor;
+
+    constructor(shapeCurve,pathCurve,shapeSampleRate,pathSampleRate,scaleFactor = 0,rotationFactor = 0){
         super();
         this.shapeCurve = new CurveSampler(shapeCurve);
         this.pathCurve = new CurveSampler(pathCurve);
@@ -225,6 +228,8 @@ class SweepSurface extends Surface{
         this.pathVectors = this.pathCurve.samplePoints(pathSampleRate)
         this.rows = this.shapeVectors.posVectors.length;
         this.cols = this.pathVectors.posVectors.length;
+        this.scaleFactor = scaleFactor;
+        this.rotationFactor = rotationFactor;
     }
 
     getPositionBuffer(posMat){
@@ -241,7 +246,11 @@ class SweepSurface extends Surface{
 
             var pos;
             // matriz de nivel:
+            var levelDeformation = mat4.create();
+            mat4.rotateZ(levelDeformation,levelDeformation,i*this.rotationFactor);
+            mat4.scale(levelDeformation,levelDeformation,[(i*this.scaleFactor+1),(i*this.scaleFactor+1),(i*this.scaleFactor+1)]);
             var m = mat4.fromValues(ppNorm[0],ppNorm[1],0,0,ppBiNorm[0],ppBiNorm[1],ppBiNorm[2],0,ppTan[0],ppTan[1],0,0,ppPos[0],ppPos[1],0,1);
+            mat4.mul(m,m,levelDeformation);
             mat4.mul(m,posMat,m);
 
             //Tapa 1
@@ -303,7 +312,11 @@ class SweepSurface extends Surface{
 
             var nrm;
             // matriz de nivel:
+            var levelDeformation = mat4.create();
+            mat4.rotateZ(levelDeformation,levelDeformation,i*this.rotationFactor);
+            mat4.scale(levelDeformation,levelDeformation,[(i*this.scaleFactor+1),(i*this.scaleFactor+1),(i*this.scaleFactor+1)]);
             var m = mat4.fromValues(ppNorm[0],ppNorm[1],0,0,ppBiNorm[0],ppBiNorm[1],ppBiNorm[2],0,ppTan[0],ppTan[1],0,0,ppPos[0],ppPos[1],0,1);
+            mat4.mul(m,m,levelDeformation);
             mat4.invert(m,m);
             mat4.transpose(m,m);
             mat4.mul(m,normMat,m);
