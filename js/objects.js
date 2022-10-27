@@ -29,22 +29,18 @@ class Transformable {
 
     rotateX(angle){
         mat4.rotateX(this.posMatrix,this.posMatrix,angle);
-        //mat4.rotateX(this.normMatrix,this.normMatrix,angle);
     }
 
     rotateY(angle){
         mat4.rotateY(this.posMatrix,this.posMatrix,angle);
-        //mat4.rotateY(this.normMatrix,this.normMatrix,angle);
     }
 
     rotateZ(angle){
         mat4.rotateZ(this.posMatrix,this.posMatrix,angle);
-        //mat4.rotateZ(this.normMatrix,this.normMatrix,angle);
     }
 
     scale(scaleFactor){
         mat4.scale(this.posMatrix,this.posMatrix,[scaleFactor,scaleFactor,scaleFactor]);
-        //mat4.scale(this.normMatrix,this.normMatrix,[scaleFactor,scaleFactor,scaleFactor]);
     }
 
     draw(parentPosMat, parentNormMat){

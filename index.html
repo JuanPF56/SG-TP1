@@ -62,6 +62,10 @@
         <script type="text/javascript" src="js/curves.js"></script>
         <script type="text/javascript" src="js/surfaces.js"></script>
         <script type="text/javascript" src="js/objects.js"></script>
+
+        <path id="terrenoPath" d="M 0 75.826 L 132.926 75.676 L 140.836 56.757 L 500.751 56.757"/>
+        <path id="torrePath" d="M -2.252 61.478 L 81.68 61.26 L 81.68 20.42 L 102.1 20.42 L 102.1 81.68 C 102.1 81.68 81.68 122.52 81.68 163.36 C 81.68 204.2 122.52 254.798 122.52 347.14 C 122.52 367.56 122.52 408.825 122.52 408.825"/>
+
         
         <script>
 
@@ -218,20 +222,10 @@
                 gl.uniformMatrix4fv(normalMatrixUniform, false, normalMatrix);
             } 
         
-            async function readSVGpath(name){
+            function readSVGpath(name){
 
                 var parser = new DOMParser();
-                var path;
-
-                let response = await fetch("./svg/"+name+".svg");
-
-                if(response.status != 200) {
-                    throw new Error("Couldn't get file");
-                }
-
-                let textData = await response.text();
-
-                path = parser.parseFromString(textData, "text/xml").getElementsByTagName("path")[0].getAttribute("d");
+                var path = document.getElementById(name+"Path").getAttribute("d");
 
                 var pointData = path.split(' ');
                 var controlPoints = [];
@@ -255,17 +249,37 @@
                 return controlPoints;
 
             }
+
             
-            async function drawScene(){
+            function drawScene(){
 
                 setupVertexShaderMatrix();
+                controls();
 
-                torre = new Object3D(new RevolutionSurface(new CubicBezier2D(await readSVGpath("torre")), 50));
 
-                torre.scale(0.5);
+                torre1 = new Object3D(new RevolutionSurface(new CubicBezier2D(readSVGpath("torre")), 20));
+                torre2 = new Object3D(new RevolutionSurface(new CubicBezier2D(readSVGpath("torre")), 20));
+                torre3 = new Object3D(new RevolutionSurface(new CubicBezier2D(readSVGpath("torre")), 20));
+                torre4 = new Object3D(new RevolutionSurface(new CubicBezier2D(readSVGpath("torre")), 20));
+                torre5 = new Object3D(new RevolutionSurface(new CubicBezier2D(readSVGpath("torre")), 20));
+                torre6 = new Object3D(new RevolutionSurface(new CubicBezier2D(readSVGpath("torre")), 20));
+                torre7 = new Object3D(new RevolutionSurface(new CubicBezier2D(readSVGpath("torre")), 20));
+                torre8 = new Object3D(new RevolutionSurface(new CubicBezier2D(readSVGpath("torre")), 20));
+                torres = new Transformable([torre1,torre2,torre3,torre4,torre5,torre6,torre7,torre8]);
+                terreno = new Object3D(new RevolutionSurface(new CubicBezier2D(readSVGpath("terreno")),8),[torres]);
+                scene = new Transformable([terreno]);
 
-                torre.draw(mat4.create(),mat4.create());
+                torres.scale(0.12);
+                torre1.translate(3,-6,-3.5);
+                torre2.translate(-3,-6,-3.5);
+                torre3.translate(-6,-3,-3.5);
+                torre4.translate(-6,3,-3.5);
+                torre5.translate(-3,6,-3.5);
+                torre6.translate(3,6,-3.5);
+                torre7.translate(6,3,-3.5);
+                torre8.translate(6,-3,-3.5);
 
+                scene.draw(mat4.create(),mat4.create());
             }
 
  
@@ -301,7 +315,7 @@
                 mat4.identity(viewMatrix);
                 mat4.translate(viewMatrix,viewMatrix,[0,0, -ratio]);
                 mat4.rotateX(viewMatrix,viewMatrix, beta);
-                mat4.rotateZ(viewMatrix,viewMatrix, alpha);
+                mat4.rotateZ(viewMatrix,viewMatrix, -alpha);
 
                 mat4.identity(normalMatrix);
                 mat4.multiply(normalMatrix,viewMatrix,modelMatrix);
@@ -314,7 +328,7 @@
 
                 requestAnimationFrame(tick);
                 drawScene();
-                controls();
+
             }
 
             window.onload=initWebGL;
