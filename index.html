@@ -267,7 +267,10 @@
                 controls();
 
                 prueba = new Object3D(new SweepSurface(new CubicBezier2D(readSVGpath("ventana")),new CubicBezier2D([[-5,0],[-0.5,0],[0.5,0],[5,0]]),10,20));
-                //prueba = new Object3D(new SweepSurface(new CubicBezier2D(readSVGpath("ventana")),new CubicBezier3D([ [1,4.5,0] , [2,1,0] , [6,1,0] , [7,4.5,0] ]),10,20));
+                //prueba = new Object3D(new SweepSurface(new CubicBezier2D(readSVGpath("ventana")),new CubicBezier2D([ [1,4.5] , [2,1] , [6,1] , [7,4.5] ]),5,10));
+
+                //origen = new Object3D(new Sphere());
+
                 torre1 = new Object3D(new RevolutionSurface(new CubicBezier2D(readSVGpath("torre")), 10, 20));
                 torre2 = new Object3D(new RevolutionSurface(new CubicBezier2D(readSVGpath("torre")), 10, 20));
                 torre3 = new Object3D(new RevolutionSurface(new CubicBezier2D(readSVGpath("torre")), 10, 20));
@@ -281,16 +284,17 @@
                 scene = new Transformable([terreno, prueba]);
 
                 torres.scale(0.12);
-                torre1.translate(3,-6,3.5);
-                torre2.translate(-3,-6,3.5);
-                torre3.translate(-6,-3,3.5);
-                torre4.translate(-6,3,3.5);
-                torre5.translate(-3,6,3.5);
-                torre6.translate(3,6,3.5);
-                torre7.translate(6,3,3.5);
-                torre8.translate(6,-3,3.5);
+                //torre1.translate(3,-6,0);
+                torre2.translate(-3,-6,0);
+                torre3.translate(-6,-3,0);
+                torre4.translate(-6,3,0);
+                torre5.translate(-3,6,0);
+                torre6.translate(3,6,0);
+                torre7.translate(6,3,0);
+                torre8.translate(6,-3,0);
 
                 prueba.scale(0.1);
+                //origen.scale(0.01);
 
                 scene.translate(0,0,-0.3);
 

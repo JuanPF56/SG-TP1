@@ -249,7 +249,7 @@ class SweepSurface extends Surface{
             if(i == 0){
                 for (var j=0; j < this.rows; j++) {
                     var center = this.shapeVectors.center;
-                    pos = vec4.fromValues(center[0],center[1],0.0,1.0);
+                    pos = vec4.fromValues(0,0,0,1);
                     vec4.transformMat4(pos,pos,m);
                     positionBuffer.push(pos[0]);
                     positionBuffer.push(pos[1]);
@@ -261,8 +261,7 @@ class SweepSurface extends Surface{
             for (var j=0; j < this.rows; j++) {
                 
                 var sp = this.shapeVectors.posVectors[j];
-                pos = vec4.fromValues(sp[0],sp[1],0.0,1.0);                
-                      
+                pos = vec4.fromValues(sp[0]-center[0],sp[1]-center[1],0.0,1);                
                 vec4.transformMat4(pos,pos,m);
 
                 positionBuffer.push(pos[0]);
@@ -276,7 +275,7 @@ class SweepSurface extends Surface{
             if (i == this.cols - 1){
                 for (var j=0; j < this.rows; j++) {
                     var center = this.shapeVectors.center;
-                    pos = vec4.fromValues(center[0],center[1],0.0,1.0);
+                    pos = vec4.fromValues(0,0,0,1);
                     vec4.transformMat4(pos,pos,m);
                     positionBuffer.push(pos[0]);
                     positionBuffer.push(pos[1]);
@@ -312,7 +311,7 @@ class SweepSurface extends Surface{
             if(i == 0 ){
                 for (var j=0; j < this.rows; j++) {
                     var center = this.shapeVectors.center;
-                    nrm = vec4.fromValues(center[0],center[1],-1.0,1.0);
+                    nrm = vec4.fromValues(0,0,-1,1);
                     vec4.transformMat4(nrm,nrm,m);
 
                     var normalVec = vec3.fromValues(nrm[0],nrm[1],nrm[2]); 
@@ -344,7 +343,7 @@ class SweepSurface extends Surface{
             if( i == this.cols - 1){
                 for (var j=0; j < this.rows; j++) {
                     var center = this.shapeVectors.center;
-                    nrm = vec4.fromValues(center[0],center[1],1.0,1.0);
+                    nrm = vec4.fromValues(0,0,1,1);
                     vec4.transformMat4(nrm,nrm,m);
 
                     var normalVec = vec3.fromValues(nrm[0],nrm[1],nrm[2]); 

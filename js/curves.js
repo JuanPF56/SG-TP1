@@ -1,13 +1,29 @@
 class CubicBezier2D {
 
     controlPoints = [];
+    center;
 
     constructor(controlPoints){
         this.controlPoints = controlPoints;
         var first = controlPoints[0];
+        var last = controlPoints[controlPoints.length-1];
         for (var i = 0; i < this.controlPoints.length; i++){
-            controlPoints[i] = [controlPoints[i][0]-first[0], controlPoints[i][1]-first[1]];
+            controlPoints[i] = [controlPoints[i][0]-first[0], controlPoints[i][1]-last[1]];
         }
+        this.center = [0,0];
+        var maxX=0;
+        var minX=0;
+        var maxY=0;
+        var minY=0;
+        for (var i = 0; i < this.controlPoints.length; i++){
+            if (controlPoints[i][0] > maxX) {maxX = controlPoints[i][0];}
+            if (controlPoints[i][0] < minX) {minX = controlPoints[i][0];}
+            if (controlPoints[i][1] > maxY) {maxY = controlPoints[i][1];}
+            if (controlPoints[i][1] < minY) {minY = controlPoints[i][1];}
+        }
+
+        this.center[0] = (maxX-minX)/2;
+        this.center[1] = (maxY-minY)/2;
     }
 
     getCenter(){
@@ -218,6 +234,7 @@ class CurveSampler {
     samplePoints(pointsPerSection){
 
         var sections = this.curve.getSections();
+        var center = this.curve.getCenter();
 
         var posVectors = [];
         var tangVectors = [];
@@ -244,15 +261,6 @@ class CurveSampler {
             }
         }
 
-
-        var center = [0,0];
-        for (var i = 0; i < posVectors.length; i++){
-            center[0] += posVectors[i][0];
-            center[1] += posVectors[i][1];
-        }
-
-        center[0] = center[0]/posVectors.length;
-        center[1] = center[1]/posVectors.length;
 
         return {
             posVectors,
