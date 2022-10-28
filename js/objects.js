@@ -16,6 +16,10 @@ class Transformable {
         return this.posMatrix;
     }
 
+    setPosMatrix(posMatrix){
+        this.posMatrix = posMatrix;
+    }
+
     getNormMatrix(){
         var normMat = mat4.create(); 
         mat4.invert(normMat, this.posMatrix);
@@ -152,7 +156,7 @@ class Tower extends Object3D{
     constructor(height=1,children=[]){
         var path = readSVGpath("torre");
         for(var i=0;i<path.length;i++){
-            if(i>12){
+            if(i>16){
                 path[i][1] = path[i][1]*height;
             }
         }
@@ -186,7 +190,7 @@ class Roof extends Object3D{
 class Window extends Object3D{
 
     constructor(height=1,width=1,length=5,scaleFactor=0,rotationFactor=0,children=[]){
-        super(new SweepSurface(new CubicBezier2D(readSVGpath("ventana")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),10,20,scaleFactor,rotationFactor,height,width), children);
+        super(new SweepSurface(new CubicBezier2D(readSVGpath("ventana")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),10,5,scaleFactor,rotationFactor,height,width), children);
     }
 }
 
@@ -206,17 +210,17 @@ class Cylinder extends Object3D{
 
 class Wall extends Object3D{
 
-    constructor(height=1,length=5,scaleFactor=0,rotationFactor=0,children=[]){
+    constructor(path,height=1,width=1,scaleFactor=0,rotationFactor=0,children=[]){
 
-        var path = readSVGpath("muralla")
-        for(var i=0;i<path.length;i++){
+        var shapePath = readSVGpath("muralla");
+        for(var i=0;i<shapePath.length;i++){
             if(i<3 || i>22){
-                path[i][1] = path[i][1]*height;
+                shapePath[i][1] = shapePath[i][1]*height;
             }
         }
-        var shapeCurve = new CubicBezier2D(path);
-        shapeCurve.setCenter([shapeCurve.getCenter()[0],-path[0][1]]);
-        super(new SweepSurface(shapeCurve,new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),10,20,scaleFactor,rotationFactor,1,1,false), children);
+        var shapeCurve = new CubicBezier2D(shapePath);
+        shapeCurve.setCenter([shapeCurve.getCenter()[0],-shapePath[0][1]]);
+        super(new SweepSurface(shapeCurve,new CubicBezier2D(path),10,20,scaleFactor,rotationFactor,1,width,false), children);
     }
 
 }
