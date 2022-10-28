@@ -208,3 +208,9 @@ class Plane extends Object3D{
         super(new Surface(), children);
     }
 }
+
+class Sphere extends Object3D{
+    constructor(children=[]){
+        super(new SphereSurf(), children);
+    }
+}

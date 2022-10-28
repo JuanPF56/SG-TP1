@@ -416,7 +416,7 @@ class SweepSurface extends Surface{
 
 }
 
-class Sphere extends Surface{
+class SphereSurf extends Surface{
 
     calculatePos(u,v){
 

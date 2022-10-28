@@ -343,14 +343,11 @@
 
                 castillo.translate(0,0,0.4);
                 castillo.scale(0.75);
-                castillo.rotateZ(Math.PI*22.5/180);
 
                 return castillo;
             }
 
             function drawWalls(){
-
-                t +=0.01;
 
                 torre1 = new Tower();
                 torre2 = new Tower();
@@ -386,30 +383,31 @@
                 muralla6 = new Wall(10,0,0);
                 muralla7 = new Wall(6,0,0);
 
-                muralla1.translate(4.5,-4.5,0.85);
+                muralla1.translate(4.5,-4.5,0.75);
                 muralla1.rotateZ(Math.PI/4);
                 muralla1.scale(0.6);
 
-                muralla2.translate(6,0,0.85);
+                muralla2.translate(6,0,0.75);
                 muralla2.rotateZ(Math.PI/2);
                 muralla2.scale(0.6);
 
-                muralla3.translate(4.5,4.5,0.85);
-                muralla3.rotateZ(-Math.PI/4);
+                muralla3.translate(4.5,4.5,0.75);
+                muralla3.rotateZ(Math.PI*3/4);
                 muralla3.scale(0.6);
 
-                muralla4.translate(0,6,0.85);
+                muralla4.translate(0,6,0.75);
+                muralla4.rotateZ(Math.PI);
                 muralla4.scale(0.6);
 
-                muralla5.translate(-4.5,4.5,0.85);
-                muralla5.rotateZ(Math.PI/4);
+                muralla5.translate(-4.5,4.5,0.75);
+                muralla5.rotateZ(Math.PI*5/4);
                 muralla5.scale(0.6);
 
-                muralla6.translate(-6,0,0.85);
-                muralla6.rotateZ(Math.PI/2);
+                muralla6.translate(-6,0,0.75);
+                muralla6.rotateZ(-Math.PI/2);
                 muralla6.scale(0.6);
 
-                muralla7.translate(-4.5,-4.5,0.85);
+                muralla7.translate(-4.5,-4.5,0.75);
                 muralla7.rotateZ(-Math.PI/4);
                 muralla7.scale(0.6);
 
@@ -433,35 +431,112 @@
                 bloquePuerta.rotateX(Math.PI/2);
 
                 puerta = new Transformable([murallaP1,murallaP2,bloqueP1,bloqueP2,bloqueP3,bloquePuerta]);
-                puerta.translate(0,-6,0.85);
+                puerta.translate(0,-6,0.8);
                 puerta.scale(0.6);
 
                 pared = new Transformable([torre1,torre2,torre3,torre4,torre5,torre6,torre7,torre8,muralla1,muralla2,muralla3,muralla4,muralla5,muralla6,muralla7,puerta]);
 
                 pared.translate(0,0,0.18);
                 pared.scale(0.1);
-                pared.rotateZ(Math.PI*22.5/180);
 
                 return pared;
 
             }
 
+            function drawCatapult(){
+
+                municion = new Sphere();
+                municion.scale(0.4);
+                municion.translate(0,0,1.2);
+
+                cabeza = new Block(0.2,1.2,1.2,0,0,[municion]);
+                cabeza.translate(-2.5,0,0.15);
+
+                sostenCP1 = new Block(0.03,0.2,0.4,0.01,0);
+                sostenCP1.translate(0.2,0,-0.1);
+                sostenCP1.rotateY(Math.PI/2);
+                sostenCP2 = new Block(0.03,0.2,0.4,0.01,0);
+                sostenCP2.translate(-0.2,0,-0.1);
+                sostenCP2.rotateY(Math.PI/2);
+                contraPeso = new Block(0.4,0.6,0.6,0,0);
+                contraPeso.translate(0,0,-0.5);
+
+                ejeCP = new Cylinder(0.08,0.08,0.5,0,0,[sostenCP1,sostenCP2,contraPeso]);
+                ejeCP.translate(2.8,0,0);
+                ejeCP.rotateZ(Math.PI/2);
+                ejeCP.rotateX(-Math.PI*((Math.sin(t*20))*1/4+1/8));
+
+                pala = new Block(0.2,0.2,6,0.03,0, [ejeCP, cabeza]);
+                pala.translate(0,1.6,0.2);
+                pala.rotateZ(-Math.PI/2);
+
+                ejeP = new Cylinder(0.25,0.25,2,0,0, [pala]);
+                ejeP.translate(0,0,0.7);
+                ejeP.rotateZ(Math.PI/2);
+                ejeP.rotateX(Math.PI*((Math.sin(t*20))*1/4+1/8));
+                sosten1 = new Block(0.1,0.7,2.4,0.05,0);
+                sosten1.translate(0,0.8,0);
+                sosten1.rotateY(Math.PI/2);
+                sosten1.rotateX(Math.PI/2);
+                sosten2 = new Block(0.1,0.7,2.4,0.05,0);
+                sosten2.translate(0,-0.8,0);
+                sosten2.rotateY(Math.PI/2);
+                sosten2.rotateX(Math.PI/2);
+                sosten = new Transformable([sosten1,sosten2,ejeP]);
+                sosten.translate(0.6,0,1.2);
+
+                ruedaD1 = new Cylinder(0.4,0.4,0.15,0,0);
+                ruedaD1.translate(1.35,0,0);
+                ruedaD2 = new Cylinder(0.4,0.4,0.15,0,0);
+                ruedaD2.translate(-1.35,0,0);
+                ejeD = new Cylinder(0.05,0.05,3,0,0, [ruedaD1,ruedaD2]);
+                ejeD.translate(1.2,0,0);
+                ejeD.rotateZ(Math.PI/2);
+
+                ruedaT1 = new Cylinder(0.4,0.4,0.15,0,0);
+                ruedaT1.translate(1.35,0,0);
+                ruedaT2 = new Cylinder(0.4,0.4,0.15,0,0);
+                ruedaT2.translate(-1.35,0,0);
+                ejeT = new Cylinder(0.05,0.05,3,0,0, [ruedaT1,ruedaT2]);
+                ejeT.translate(-1.2,0,0);
+                ejeT.rotateZ(Math.PI/2);
+
+
+
+                catapulta = new Block(0.2,2.5,3.5,0,0,[ejeD,ejeT,sosten]);
+                catapulta.rotateZ(Math.PI*t/10);
+                catapulta.translate(1.5,1.5,0.03);
+                catapulta.rotateZ(Math.PI*5/4);
+                catapulta.scale(0.06);
+
+                return catapulta;
+
+            }
             
             function drawScene(){
 
                 setupVertexShaderMatrix();
                 controls();
 
+                t +=0.01;
+
                 agua = new Plane();
                 agua.translate(0,0,-0.1);
                 agua.rotateX(-Math.PI/2);
 
-                plataforma = new Platform([drawCastle(),drawWalls()]);
+                puente = new Block(0.2,2,4,0,0);
+                puente.scale(0.15);
+                puente.rotateZ(Math.PI/2);
+                puente.translate(-6.5,0,0.8);
+
+                plataforma = new Platform([drawCastle(),drawWalls(),puente]);
                 plataforma.scale(1.1);
                 plataforma.translate(0,0,-0.2);
 
-                terreno = new Terrain([agua, plataforma]);
-                scene = new Transformable([terreno]);
+
+                terreno = new Terrain([agua]);
+                terreno.rotateZ(Math.PI*22.5/180);
+                scene = new Transformable([terreno,plataforma,drawCatapult()]);
 
 
                 scene.draw(mat4.create(),mat4.create());
