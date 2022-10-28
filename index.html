@@ -72,7 +72,8 @@
         <path id="techoTCPath" d="M 0 0 C 0 0 0.009 84.835 72.081 141.892 C 31.241 141.892 0 141.891 0 141.891"/>
         <path id="ventanaPath" d="M 0 150 L 0 50 C 0 35 10 0 50 0 C 90 0 100 35 100 50 C 100 100 100 150 100 150 L 0 150 Z"/>
         <path id="circuloPath" d="M 200 100 C 200 155.228 155.228 200 100 200 C 44.771 200 0 155.228 0 100 C 0 44.771 44.771 0 100 0 C 155.228 0 200 44.771 200 100 Z"/>
-        <path id="cuadradoPath" d="M 100 300 C 100 300 100 100 100 100 C 100 100 300 100 300 100 L 300 300 L 100 300 Z"/>
+        <path id="cuadradoPath" d="M 0 100 C 0 100 0 0 0 0 C 0 0 100 0 100 0 L 100 100 L 0 100 Z"/>
+        <path id="plataformaPath" d="M 0 56.757 C 0 56.757 37.838 56.757 75.676 56.757 C 89.778 56.757 94.595 75.676 94.595 75.676"/>
         
         <script>
 
@@ -106,6 +107,7 @@
             var alpha = 0;
             var beta = Math.PI/2;
             var speedFactor = 0.01;
+            var t = 0;
 
             var isMouseDown = false;
             var actualEvent;
@@ -263,44 +265,204 @@
 
             }
 
+            function drawCastle(){
+
+                techo1 = new Roof();
+                techo1.translate(0,0,4.5);
+
+                techo2 = new Roof();
+                techo2.translate(0,0,4.5);
+
+                techo3 = new Roof();
+                techo3.translate(0,0,4.5);
+
+                techo4 = new Roof();
+                techo4.translate(0,0,4.5);
+
+                torreC1 = new TowerC([techo1]);
+                torreC1.translate(0.4,0.25,-0.3);
+                torreC1.scale(0.15);
+
+                torreC2 = new TowerC([techo2]);
+                torreC2.translate(-0.4,0.25,-0.3);
+                torreC2.scale(0.15);
+
+                torreC3 = new TowerC([techo3]);           
+                torreC3.translate(0.4,-0.25,-0.3);
+                torreC3.scale(0.15);
+
+                torreC4 = new TowerC([techo4]);
+                torreC4.translate(-0.4,-0.25,-0.3);
+                torreC4.scale(0.15);
+
+                bloqueD1 = new Block(0.02,0.02,0.75);
+                bloqueD1.translate(0,0.25,0);
+
+                bloqueD2 = new Block(0.02,0.02,0.75);
+                bloqueD2.translate(0,-0.25,0);
+
+                bloqueD3 = new Block(0.02,0.02,0.5);
+                bloqueD3.rotateZ(Math.PI/2);
+                bloqueD3.translate(0,0.375,0);
+
+                bloqueD4 = new Block(0.02,0.02,0.5);
+                bloqueD4.rotateZ(Math.PI/2);
+                bloqueD4.translate(0,-0.375,0);
+
+                ventana1 = new Window(0.08,0.08,0.525,0,0);
+                ventana1.rotateZ(Math.PI/2);
+                ventana1.translate(0,0,0.12);
+                ventana2 = new Window(0.08,0.08,0.525,0,0);
+                ventana2.rotateZ(Math.PI/2);
+                ventana2.translate(0,-0.2,0.12);
+                ventana3 = new Window(0.08,0.08,0.525,0,0);
+                ventana3.rotateZ(Math.PI/2);
+                ventana3.translate(0,0.2,0.12);
+
+                ventana4 = new Window(0.08,0.08,0.525,0,0);
+                ventana4.rotateZ(Math.PI/2);
+                ventana4.translate(0,0,-0.12);
+                ventana5 = new Window(0.08,0.08,0.525,0,0);
+                ventana5.rotateZ(Math.PI/2);
+                ventana5.translate(0,-0.2,-0.12);
+                ventana6 = new Window(0.08,0.08,0.525,0,0);
+                ventana6.rotateZ(Math.PI/2);
+                ventana6.translate(0,0.2,-0.12);
+
+                ventana7 = new Window(0.08,0.08,0.78,0,0);
+                ventana7.translate(0,0.08,0.12);
+                ventana8 = new Window(0.08,0.08,0.78,0,0);
+                ventana8.translate(0,-0.08,0.12);
+
+                ventana9 = new Window(0.08,0.08,0.78,0,0);
+                ventana9.translate(0,0.08,-0.12);
+                ventana10 = new Window(0.08,0.08,0.78,0,0);
+                ventana10.translate(0,-0.08,-0.12);
+
+                castillo = new Block(0.6,0.5,0.75,0,0,[torreC1,torreC2,torreC3,torreC4,bloqueD1,bloqueD2,bloqueD3,bloqueD4,ventana1,ventana2,ventana3,ventana4,ventana5,ventana6,ventana7,ventana8,ventana9,ventana10]);
+
+                castillo.translate(0,0,0.4);
+                castillo.scale(0.75);
+                castillo.rotateZ(Math.PI*22.5/180);
+
+                return castillo;
+            }
+
+            function drawWalls(){
+
+                t +=0.01;
+
+                torre1 = new Tower();
+                torre2 = new Tower();
+                torre3 = new Tower();
+                torre4 = new Tower();
+                torre5 = new Tower();
+                torre6 = new Tower();
+                torre7 = new Tower();
+                torre8 = new Tower();
+
+                torre1.translate(3,-6,0);
+                torre1.scale(0.7);
+                torre2.translate(-3,-6,0);
+                torre2.scale(0.7);
+                torre3.translate(-6,-3,0);
+                torre3.scale(0.7);
+                torre4.translate(-6,3,0);
+                torre4.scale(0.7);
+                torre5.translate(-3,6,0);
+                torre5.scale(0.7);
+                torre6.translate(3,6,0);
+                torre6.scale(0.7);
+                torre7.translate(6,3,0);
+                torre7.scale(0.7);
+                torre8.translate(6,-3,0);
+                torre8.scale(0.7);
+
+                muralla1 = new Wall(6,0,0);
+                muralla2 = new Wall(10,0,0);
+                muralla3 = new Wall(6,0,0);
+                muralla4 = new Wall(10,0,0);
+                muralla5 = new Wall(6,0,0);
+                muralla6 = new Wall(10,0,0);
+                muralla7 = new Wall(6,0,0);
+
+                muralla1.translate(4.5,-4.5,0.85);
+                muralla1.rotateZ(Math.PI/4);
+                muralla1.scale(0.6);
+
+                muralla2.translate(6,0,0.85);
+                muralla2.rotateZ(Math.PI/2);
+                muralla2.scale(0.6);
+
+                muralla3.translate(4.5,4.5,0.85);
+                muralla3.rotateZ(-Math.PI/4);
+                muralla3.scale(0.6);
+
+                muralla4.translate(0,6,0.85);
+                muralla4.scale(0.6);
+
+                muralla5.translate(-4.5,4.5,0.85);
+                muralla5.rotateZ(Math.PI/4);
+                muralla5.scale(0.6);
+
+                muralla6.translate(-6,0,0.85);
+                muralla6.rotateZ(Math.PI/2);
+                muralla6.scale(0.6);
+
+                muralla7.translate(-4.5,-4.5,0.85);
+                muralla7.rotateZ(-Math.PI/4);
+                muralla7.scale(0.6);
+
+                murallaP1 = new Wall(2.5,0,0);
+                murallaP1.translate(3,0,0);
+                murallaP2 = new Wall(2.5,0,0);
+                murallaP2.translate(-3,0,0);
+                bloqueP1 = new Block(0.2,3,3.5,0.01,0);
+                bloqueP1.translate(1.8,0,0);
+                bloqueP1.rotateY(Math.PI/2);
+                bloqueP2 = new Block(0.2,3,3.5,0.01,0);
+                bloqueP2.translate(-1.8,0,0);
+                bloqueP2.rotateY(Math.PI/2);
+                bloqueP3 = new Block(0.2,3,3.8,0,0);
+                bloqueP3.translate(0,0,1.8);
+                bloquePuerta = new Block(0.2,2.5,3.4,0,0);
+                bloquePuerta.translate(0,-1,0);
+                bloquePuerta.translate(0,0,-1);
+                bloquePuerta.rotateX(Math.PI*((Math.sin(t))*1/4+1/4));
+                bloquePuerta.translate(0,0,1);
+                bloquePuerta.rotateX(Math.PI/2);
+
+                puerta = new Transformable([murallaP1,murallaP2,bloqueP1,bloqueP2,bloqueP3,bloquePuerta]);
+                puerta.translate(0,-6,0.85);
+                puerta.scale(0.6);
+
+                pared = new Transformable([torre1,torre2,torre3,torre4,torre5,torre6,torre7,torre8,muralla1,muralla2,muralla3,muralla4,muralla5,muralla6,muralla7,puerta]);
+
+                pared.translate(0,0,0.18);
+                pared.scale(0.1);
+                pared.rotateZ(Math.PI*22.5/180);
+
+                return pared;
+
+            }
+
             
             function drawScene(){
 
                 setupVertexShaderMatrix();
                 controls();
 
-                prueba = new Wall();
-                prueba2 = new Cylinder();
-                origen = new Object3D(new Sphere());
+                agua = new Plane();
+                agua.translate(0,0,-0.1);
+                agua.rotateX(-Math.PI/2);
 
-                torre1 = new Tower();
-                torre2 = new TowerC();
-                torre3 = new Object3D(new RevolutionSurface(new CubicBezier2D(readSVGpath("torre")), 10, 20));
-                torre4 = new Object3D(new RevolutionSurface(new CubicBezier2D(readSVGpath("torre")), 10, 20));
-                torre5 = new Object3D(new RevolutionSurface(new CubicBezier2D(readSVGpath("torre")), 10, 20));
-                torre6 = new Object3D(new RevolutionSurface(new CubicBezier2D(readSVGpath("torre")), 10, 20));
-                torre7 = new Object3D(new RevolutionSurface(new CubicBezier2D(readSVGpath("torre")), 10, 20));
-                torre8 = new Object3D(new RevolutionSurface(new CubicBezier2D(readSVGpath("torre")), 10, 20));
-                torres = new Transformable([torre1,torre2,torre3,torre4,torre5,torre6,torre7,torre8]);
-                terreno = new Terrain([torres]);
-                scene = new Transformable([terreno, origen, prueba, prueba2]);
+                plataforma = new Platform([drawCastle(),drawWalls()]);
+                plataforma.scale(1.1);
+                plataforma.translate(0,0,-0.2);
 
-                torres.scale(0.12);
-                torre1.translate(0,0,0);
-                torre2.translate(-3,-6,0);
-                torre3.translate(-6,-3,0);
-                torre4.translate(-6,3,0);
-                torre5.translate(-3,6,0);
-                torre6.translate(3,6,0);
-                torre7.translate(6,3,0);
-                torre8.translate(6,-3,0);
+                terreno = new Terrain([agua, plataforma]);
+                scene = new Transformable([terreno]);
 
-                prueba.scale(0.1);
-                prueba2.scale(0.2);
-                prueba2.translate(0,0,2);
-                origen.scale(0.01);
-
-                scene.translate(0,0,-0.3);
 
                 scene.draw(mat4.create(),mat4.create());
             }

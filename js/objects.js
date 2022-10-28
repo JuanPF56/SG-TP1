@@ -139,6 +139,14 @@ class Terrain extends Object3D{
 
 }
 
+class Platform extends Object3D{
+
+    constructor(children=[]){
+        super(new RevolutionSurface(new CubicBezier2D(readSVGpath("plataforma")), 10, 20), children);
+    }
+
+}
+
 class Tower extends Object3D{
 
     constructor(children=[]){
@@ -155,24 +163,32 @@ class TowerC extends Object3D{
 
 }
 
+class Roof extends Object3D{
+
+    constructor(children=[]){
+        super(new RevolutionSurface(new CubicBezier2D(readSVGpath("techoTC")), 10, 20), children);
+    }
+
+}
+
 class Window extends Object3D{
 
-    constructor(length=5,scaleFactor=0,rotationFactor=0,children=[]){
-        super(new SweepSurface(new CubicBezier2D(readSVGpath("ventana")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),10,20,scaleFactor,rotationFactor), children);
+    constructor(height=1,width=1,length=5,scaleFactor=0,rotationFactor=0,children=[]){
+        super(new SweepSurface(new CubicBezier2D(readSVGpath("ventana")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),10,20,scaleFactor,rotationFactor,height,width), children);
     }
 }
 
 class Block extends Object3D{
 
-    constructor(length=2,scaleFactor=0,rotationFactor=0,children=[]){
-        super(new SweepSurface(new CubicBezier2D(readSVGpath("cuadrado")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),10,20,scaleFactor,rotationFactor), children);
+    constructor(height=1,width=1,length=2,scaleFactor=0,rotationFactor=0,children=[]){
+        super(new SweepSurface(new CubicBezier2D(readSVGpath("cuadrado")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),10,20,scaleFactor,rotationFactor,height,width), children);
     }
 }
 
 class Cylinder extends Object3D{
 
-    constructor(length=5,scaleFactor=0,rotationFactor=0,children=[]){
-        super(new SweepSurface(new CubicBezier2D(readSVGpath("circulo")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),10,20,scaleFactor,rotationFactor), children);
+    constructor(height=1,width=1,length=5,scaleFactor=0,rotationFactor=0,children=[]){
+        super(new SweepSurface(new CubicBezier2D(readSVGpath("circulo")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),10,20,scaleFactor,rotationFactor,height,width), children);
     }
 }
 
@@ -181,9 +197,14 @@ class Wall extends Object3D{
     constructor(length=5,scaleFactor=0,rotationFactor=0,children=[]){
 
         var shapeCurve = new CubicBezier2D(readSVGpath("muralla"));
-        super(new SweepSurface(shapeCurve,new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),10,20,scaleFactor,rotationFactor,false), children);
+        super(new SweepSurface(shapeCurve,new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),10,20,scaleFactor,rotationFactor,1,1,false), children);
         mat4.translate(this.posMatrix,this.posMatrix,[0,0,shapeCurve.getCenter()[1]/10]);
     }
 
 }
 
+class Plane extends Object3D{
+    constructor(children=[]){
+        super(new Surface(), children);
+    }
+}

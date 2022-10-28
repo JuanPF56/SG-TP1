@@ -21,8 +21,8 @@ class CubicBezier2D {
             if (controlPoints[i][1] < minY) {minY = controlPoints[i][1];}
         }
 
-        this.center[0] = (Math.abs(maxX-minX))/2;
-        this.center[1] = (Math.abs(maxY-minY))/2;
+        this.center[0] = (maxX-minX)/2;
+        this.center[1] = (maxY-minY)/2;
     }
 
     getFirst(){
@@ -45,53 +45,47 @@ class CubicBezier2D {
     getPosition(u){
 
         if(u >= this.getSections()){
-            throw new Error('Not enough sections!');
+            u = this.getSections() - 0.01;
         }
-        else{
 
-            var i = Math.trunc(u);
-            var t = u - i;
+        var i = Math.trunc(u);
+        var t = u - i;
 
-            var p0 = this.controlPoints[0+3*i];
-            var p1 = this.controlPoints[1+3*i];
-            var p2 = this.controlPoints[2+3*i];
-            var p3 = this.controlPoints[3+3*i];
+        var p0 = this.controlPoints[0+3*i];
+        var p1 = this.controlPoints[1+3*i];
+        var p2 = this.controlPoints[2+3*i];
+        var p3 = this.controlPoints[3+3*i];
 
-            var x = ((1-t)**3) * p0[0] + 3*t*((1-t)**2) * p1[0] + 3*(t**2)*(1-t) * p2[0] + (t**3) * p3[0];
-            var y = ((1-t)**3) * p0[1] + 3*t*((1-t)**2) * p1[1] + 3*(t**2)*(1-t) * p2[1] + (t**3) * p3[1];
+        var x = ((1-t)**3) * p0[0] + 3*t*((1-t)**2) * p1[0] + 3*(t**2)*(1-t) * p2[0] + (t**3) * p3[0];
+        var y = ((1-t)**3) * p0[1] + 3*t*((1-t)**2) * p1[1] + 3*(t**2)*(1-t) * p2[1] + (t**3) * p3[1];
 
-            var posVec = vec2.fromValues(x,y);
+        var posVec = vec2.fromValues(x,y);
 
-            return posVec;
-
-        }
+        return posVec;
 
     }
 
     getTangent(u){
 
         if(u >= this.getSections()){
-            throw new Error('Not enough sections!');
+            u = this.getSections() - 0.01;
         }
-        else{
 
-            var i = Math.trunc(u);
-            var t = u - i;
+        var i = Math.trunc(u);
+        var t = u - i;
 
-            var p0 = this.controlPoints[0+3*i];
-            var p1 = this.controlPoints[1+3*i];
-            var p2 = this.controlPoints[2+3*i];
-            var p3 = this.controlPoints[3+3*i];
+        var p0 = this.controlPoints[0+3*i];
+        var p1 = this.controlPoints[1+3*i];
+        var p2 = this.controlPoints[2+3*i];
+        var p3 = this.controlPoints[3+3*i];
 
-            var x = -3*((1-t)**2) * p0[0] + 3*(3*(t**2)-4*t+1) * p1[0] + 3*(2-3*t)*t * p2[0] + 3*(t**2) * p3[0];
-            var y = -3*((1-t)**2) * p0[1] + 3*(3*(t**2)-4*t+1) * p1[1] + 3*(2-3*t)*t * p2[1] + 3*(t**2) * p3[1];
+        var x = -3*((1-t)**2) * p0[0] + 3*(3*(t**2)-4*t+1) * p1[0] + 3*(2-3*t)*t * p2[0] + 3*(t**2) * p3[0];
+        var y = -3*((1-t)**2) * p0[1] + 3*(3*(t**2)-4*t+1) * p1[1] + 3*(2-3*t)*t * p2[1] + 3*(t**2) * p3[1];
 
-            var tangVec = vec2.fromValues(x,y);
-            vec2.normalize(tangVec,tangVec);
+        var tangVec = vec2.fromValues(x,y);
+        vec2.normalize(tangVec,tangVec);
 
-            return tangVec;
-
-        }
+        return tangVec;
 
     }
 
@@ -248,24 +242,32 @@ class CurveSampler {
         var posVectors = [];
         var tangVectors = [];
         var normVectors = [];
-        var biNormVectors = [];
+        //var biNormVectors = [];
 
         for(var i = 0; i < sections; i++){
-            for(var k = 0; k < pointsPerSection; k++){
+            for(var k = 0; k <= pointsPerSection; k++){
 
                 var posVec = this.curve.getPosition(i+k/pointsPerSection);
+
                 var tangVec = this.curve.getTangent(i+k/pointsPerSection);
                 var normVec = this.curve.getNormal(i+k/pointsPerSection);
+
+                if(i==0 && k==0){
+                    var tangVec = this.curve.getTangent(i+(k+1)/pointsPerSection);
+                    var normVec = this.curve.getNormal(i+(k+1)/pointsPerSection);
+                }
+
+                posVectors.push(posVec);
+                tangVectors.push(tangVec);
+                normVectors.push(normVec);
+
+
                 //if(this.curve instanceof CubicBezier3D){
                 //    var biNormVec = vec3.fromValues(1,1,1);
                 //    vec3.cross(biNormVec, normVec, tangVec);
                 //    vec3.normalize(biNormVec,biNormVec);
                 //    biNormVectors.push(biNormVec);
                 //}
-
-                posVectors.push(posVec);
-                tangVectors.push(tangVec);
-                normVectors.push(normVec);
 
             }
         }

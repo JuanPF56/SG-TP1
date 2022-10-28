@@ -222,14 +222,16 @@ class SweepSurface extends Surface{
 
     closed;
 
-    constructor(shapeCurve,pathCurve,shapeSampleRate,pathSampleRate,scaleFactor = 0,rotationFactor = 0,closed=true){
+    constructor(shapeCurve,pathCurve,shapeSampleRate,pathSampleRate,scaleFactor = 0,rotationFactor = 0,height = 1,width = 1,closed = true){
         super();
         this.shapeCurve = new CurveSampler(shapeCurve);
         this.pathCurve = new CurveSampler(pathCurve);
         this.shapeVectors = this.shapeCurve.samplePoints(shapeSampleRate);
-        this.pathVectors = this.pathCurve.samplePoints(pathSampleRate)
+        this.pathVectors = this.pathCurve.samplePoints(pathSampleRate);
         this.rows = this.shapeVectors.posVectors.length;
         this.cols = this.pathVectors.posVectors.length;
+        this.height = height;
+        this.width = width;
         this.scaleFactor = scaleFactor;
         this.rotationFactor = rotationFactor;
         this.closed = closed;
@@ -251,10 +253,13 @@ class SweepSurface extends Surface{
 
             var pos;
             // matriz de nivel:
+            var scalingMat = mat4.create();
+            mat4.scale(scalingMat,scalingMat,[this.width,this.height,0]);
             var levelDeformation = mat4.create();
             mat4.rotateZ(levelDeformation,levelDeformation,(i/(this.cols-1))*2*Math.PI*this.rotationFactor);
             mat4.scale(levelDeformation,levelDeformation,[(i*this.scaleFactor+1),(i*this.scaleFactor+1),(i*this.scaleFactor+1)]);
             var m = mat4.fromValues(ppNorm[0],ppNorm[1],0,0,ppBiNorm[0],ppBiNorm[1],ppBiNorm[2],0,ppTan[0],ppTan[1],0,0,ppPos[0],ppPos[1],0,1);
+            mat4.mul(levelDeformation,levelDeformation,scalingMat);
             mat4.mul(m,m,levelDeformation);
             mat4.mul(m,posMat,m);
 
@@ -343,7 +348,6 @@ class SweepSurface extends Surface{
 
             for (var j=0; j < this.rows; j++) {
 
-                          
                 var n = this.shapeVectors.normVectors[j];
                 var nrm = vec4.fromValues(n[0],n[1],0.0,1.0);
                 
