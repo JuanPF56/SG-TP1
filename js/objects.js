@@ -1,10 +1,12 @@
 class Transformable {
 
     posMatrix;
+    completePosMatrix;
     children = [];
     
     constructor(children=[]){
         this.posMatrix = mat4.create();
+        this.completePosMatrix = mat4.create();
         this.children = this.children.concat(children);
     }
 
@@ -14,6 +16,10 @@ class Transformable {
 
     getPosMatrix(){
         return this.posMatrix;
+    }
+
+    getCompletePosMatrix(){
+        return this.completePosMatrix;
     }
 
     setPosMatrix(posMatrix){
@@ -49,12 +55,11 @@ class Transformable {
 
     draw(parentPosMat, parentNormMat){
 
-        var posMat = mat4.create();
-        mat4.mul(posMat, parentPosMat, this.posMatrix);
+        mat4.mul(this.completePosMatrix, parentPosMat, this.posMatrix);
         var normMat = mat4.create();
         mat4.mul(normMat, parentNormMat, this.getNormMatrix());
 
-        this.children.forEach(child => child.draw(posMat,normMat));
+        this.children.forEach(child => child.draw(this.completePosMatrix,normMat));
         
     }
 
