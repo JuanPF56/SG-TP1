@@ -108,6 +108,7 @@
             var alpha = 0;
             var beta = Math.PI/2;
             var speedFactor = 0.01;
+            var scrollSpeed = 0.5;
             var t = 0;
 
             const options = {
@@ -145,6 +146,9 @@
 
             var mouse = {x: 0, y: 0};
 
+            var fpPosition = {x: 0, y: 0};
+            var fpRotation = {z: 0};
+
             $('canvas').mousemove(function(e){ 
                 mouse.x = e.clientX || e.pageX; 
                 mouse.y = e.clientY || e.pageY 
@@ -160,30 +164,53 @@
 
             $('canvas').bind('mousewheel DOMMouseScroll', function(event){
                 if(event.originalEvent.wheelDelta < 0){
-                    ratio += 0.5;
+                    ratio += scrollSpeed;
                 }else if (ratio > 1){
-                    ratio -= 0.5;
+                    ratio -= scrollSpeed;
                 }
             });   
 
             $('body').on("keydown",function(event){
-            //console.log(event);
             switch(event.key){
                 case "1":
                     if(camera != 1){
                         ratio = 4;
+                        scrollSpeed = 0.5;
                     }
                     camera = 1;
                 break;
                 case "2":
                     if(camera != 2){
-                        ratio = 20;
+                        ratio = 20;                        
+                        scrollSpeed = 5;
                     }
                     camera = 2;
                 break;
                 case "3":
                     camera = 3;
-                break;                                  
+                break;
+                case "a":
+                    fpPosition.x+=right[0];
+                    fpPosition.y+=right[1];
+                break;
+                case "d":
+                    fpPosition.x-=right[0];
+                    fpPosition.y-=right[1];
+                break;
+                case "w":
+                    fpPosition.x-=forward[0];
+                    fpPosition.y-=forward[1];
+                break;  
+                case "s":
+                    fpPosition.x+=forward[0];
+                    fpPosition.y+=forward[1];
+                break;
+                case "q":
+                    fpRotation.z-=0.1;
+                break; 
+                case "e":
+                    fpRotation.z+=0.1;
+                break;                                             
             }
                  
             });    
@@ -520,15 +547,15 @@
                 murallaP1 = new Wall([[1,points[0][1]],[1,points[0][1]],points[0],points[0]],wallHeight-0.3,0.6,0,0);
                 murallaP2 = new Wall([points[wallSides-1],points[wallSides-1],[-1,points[wallSides-1][1]],[-1,points[wallSides-1][1]]],wallHeight-0.3,0.6,0,0);
 
-                bloqueP1 = new Block(0.2,3,wallHeight*4,0.01,0);
-                bloqueP1.translate(1.8,0,1.5);
+                bloqueP1 = new Block(0.2,3,wallHeight*4.5,0.01,0);
+                bloqueP1.translate(1.7,0,1.5);
                 bloqueP1.rotateY(Math.PI/2);
-                bloqueP2 = new Block(0.2,3,wallHeight*4,0.01,0);
-                bloqueP2.translate(-1.8,0,1.5);
+                bloqueP2 = new Block(0.2,3,wallHeight*4.5,0.01,0);
+                bloqueP2.translate(-1.7,0,1.5);
                 bloqueP2.rotateY(Math.PI/2);
-                bloqueP3 = new Block(0.2,3,3.8,0,0);
-                bloqueP3.translate(0,0,wallHeight*3);
-                bloquePuerta = new Block(0.2,wallHeight*2.7,3.4,0,0);
+                bloqueP3 = new Block(wallHeight*0.4,3,3.6,0,0);
+                bloqueP3.translate(0,0,wallHeight*3.4);
+                bloquePuerta = new Block(0.2,wallHeight*3,3.2,0,0);
                 bloquePuerta.translate(0,0,1.4);
                 bloquePuerta.translate(0,-1,-1);
                 bloquePuerta.rotateX(gateAngle*Math.PI/180);
@@ -667,36 +694,65 @@
                     alpha = alpha + deltaX * speedFactor;
                     beta = beta + deltaY * speedFactor;
 
-                    if (beta>Math.PI/2) beta=Math.PI/2;
-                    if (beta<0) beta=0;
+                    if(camera == 3){
+                        maxBeta = Math.PI;
+                        minBeta = 0;
+                    } else{
+                        maxBeta = Math.PI/2;
+                        minBeta = 0;
+                    }
 
-                    
-                    $('#valorDeltaX').html(deltaX);
-                    $('#valorDeltaY').html(deltaY);
-
-                    $('#valorAlpha').html(alpha.toFixed(2));
-                    $('#valorBeta').html(beta.toFixed(2));
+                    if (beta>maxBeta) beta=maxBeta;
+                    if (beta<minBeta) beta=minBeta;
 
                 }
+
 
                 mat4.identity(viewMatrix);
                 mat4.identity(normalMatrix);
 
-                mat4.translate(viewMatrix,viewMatrix,[0,0, -ratio]);
-                mat4.rotateX(viewMatrix,viewMatrix, -beta);
-                mat4.rotateZ(viewMatrix,viewMatrix, alpha);
+                if(camera == 1 || camera == 2){
+                    mat4.translate(viewMatrix,viewMatrix,[0,0, -ratio]);
+                    mat4.rotateX(viewMatrix,viewMatrix, -beta);
+                    mat4.rotateZ(viewMatrix,viewMatrix, alpha);
 
-                if (camera==2){
+                    if (camera==2){
+                        catapultPosMat = catapulta.getPosMatrix();
+                        inverse = mat4.create();
+                        mat4.invert(inverse,catapultPosMat);
+                        mat4.mul(viewMatrix,viewMatrix,inverse);
+                        mat4.mul(normalMatrix,viewMatrix,catapultPosMat);
+                        
+                    } else{
+                        mat4.mul(normalMatrix,viewMatrix,modelMatrix);
+                    }
 
-                    catapultPosMat = catapulta.getPosMatrix();
-                    inverse = mat4.create();
-                    mat4.invert(inverse,catapultPosMat);
-                    mat4.mul(viewMatrix,viewMatrix,inverse);
-                    mat4.mul(normalMatrix,viewMatrix,catapultPosMat);
-                    
-                } else{
-                    mat4.mul(normalMatrix,viewMatrix,modelMatrix);
                 }
+
+                if(camera == 3){
+
+                    forward = vec4.fromValues(0,0.1,0,1);
+                    right = vec4.fromValues(0.1,0,0,1);
+
+                    var ang=fpRotation.z;
+                    var m = mat4.create();
+                    mat4.rotateZ(m,m,-ang);
+
+                    vec4.transformMat4(forward,forward,m);
+                    vec4.transformMat4(right,right,m);
+
+                    mat4.rotateY(viewMatrix,viewMatrix,ang);
+                    mat4.rotateX(viewMatrix,viewMatrix, -beta);
+                    mat4.rotateZ(viewMatrix,viewMatrix, alpha);
+                    mat4.translate(viewMatrix,viewMatrix,[fpPosition.x,fpPosition.y+5,-0.1]);
+
+                    mat4.mul(normalMatrix,viewMatrix,modelMatrix);
+
+                }
+
+
+
+                
 
                 mat4.invert(normalMatrix,normalMatrix);
                 mat4.transpose(normalMatrix,normalMatrix);
