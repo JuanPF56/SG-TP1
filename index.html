@@ -26,6 +26,7 @@
 
             attribute vec3 aVertexPosition;
             attribute vec3 aVertexNormal;
+            attribute vec3 aVertexColor;
 
             uniform mat4 modelMatrix;            
             uniform mat4 viewMatrix;
@@ -35,17 +36,21 @@
 
             varying vec3 vNormal;    
             varying vec3 vPosWorld;  
+            varying highp vec3 vColor;
 
             void main(void) {
                 gl_Position = projMatrix * viewMatrix * modelMatrix * vec4(aVertexPosition, 1.0);
 
                 vPosWorld=(modelMatrix*vec4(aVertexPosition,1.0)).xyz;    //la posicion en coordenadas de mundo
-                vNormal=(normalMatrix*vec4(aVertexNormal,1.0)).xyz;       //la normal en coordenadas de mundo                
+                vNormal=(normalMatrix*vec4(aVertexNormal,1.0)).xyz;       //la normal en coordenadas de mundo
+                vColor = aVertexColor;
+
                 
             }
         </script>
 
-        <script id="shader-fs" type="x-shader/x-fragment">
+        <script id="shader-fs-normals" type="x-shader/x-fragment">
+
             precision highp float;
             varying vec3 vNormal;
             varying vec3 vPosWorld;
@@ -55,10 +60,27 @@
                 vec3 lightVec=normalize(vec3(0.0,3.0,5.0)-vPosWorld);
                 vec3 diffColor=mix(vec3(0.7,0.7,0.7),vNormal,0.4);
                 vec3 color=dot(lightVec,vNormal)*diffColor+vec3(0.2,0.2,0.2);
+                gl_FragColor = vec4(color,1.0);
 
-               gl_FragColor = vec4(color,1.0);
             }
         </script>
+
+        <script id="shader-fs-colors" type="x-shader/x-fragment">
+
+            precision highp float;
+            varying vec3 vNormal;
+            varying vec3 vPosWorld;
+            varying highp vec3 vColor;
+
+            void main(void) {
+
+                vec3 lightVec=normalize(vec3(0.0,3.0,5.0)-vPosWorld);
+                vec3 color=dot(lightVec,vNormal)*vColor+vec3(0.2,0.2,0.2);
+                gl_FragColor = vec4(color,1.0);
+
+            }
+        </script>
+
 
         <script type="text/javascript" src="js/curves.js"></script>
         <script type="text/javascript" src="js/surfaces.js"></script>
@@ -95,6 +117,8 @@
             trianglesVerticeBuffer = null,
             vertexNormalAttribute = null,
             trianglesNormalBuffer = null,
+            vertexColorAttribute = null,
+            trianglesColorBuffer = null;
             trianglesIndexBuffer = null;
                
             var modelMatrix = mat4.create();
@@ -121,11 +145,13 @@
                 anguloPuerta: 0,
                 rotacionCatapulta: 180,
                 ubicacionCatapulta: 0,
+                camara: 1,
                 normales: true
 
             }
 
             var camera = 1;
+            var renderNormals = true;
 
             const windowSeparation = 0.1;
 
@@ -138,8 +164,6 @@
             var gateAngle = 0;
             var catapultRot = 180;
             var catapultPos = 0;
-
-            var renderNormals = true;
 
             var isMouseDown = false;
             var actualEvent;
@@ -173,21 +197,20 @@
             $('body').on("keydown",function(event){
             switch(event.key){
                 case "1":
-                    if(camera != 1){
-                        ratio = 4;
-                        scrollSpeed = 0.5;
-                    }
+                    ratio = 4;
+                    scrollSpeed = 0.5;
                     camera = 1;
+                    options.camara = 1;
                 break;
                 case "2":
-                    if(camera != 2){
-                        ratio = 20;                        
-                        scrollSpeed = 5;
-                    }
+                    ratio = 20;                        
+                    scrollSpeed = 5;
                     camera = 2;
+                    options.camara = 2;
                 break;
                 case "3":
                     camera = 3;
+                    options.camara = 3;
                 break;
                 case "a":
                     fpPosition.x+=right[0];
@@ -264,8 +287,9 @@
                     
             function initShaders() {
                 //get shader source
-                var fs_source = document.getElementById('shader-fs').innerHTML,
-                    vs_source = document.getElementById('shader-vs').innerHTML;
+                if(renderNormals) {var fs_source = document.getElementById('shader-fs-normals').innerHTML;}
+                else {var fs_source = document.getElementById('shader-fs-colors').innerHTML;}
+                var vs_source = document.getElementById('shader-vs').innerHTML;
 
                 //compile shaders    
                 vertexShader = makeShader(vs_source, gl.VERTEX_SHADER);
@@ -356,10 +380,22 @@
 
                 sceneSettings.add(shootCatapult, "Disparar catapulta");
 
+                gui.add(options, "camara", { "Orbital castillo": '1', "Orbital catapulta": '2', "Primera persona": '3'}).onChange((val) => {
+                    camera = val;
+                    if(camera == 1){
+                        ratio = 4;                        
+                        scrollSpeed = 0.5;
+                    }
+                    if(camera == 2){
+                        ratio = 20;                        
+                        scrollSpeed = 5;
+                    }
+                }).listen();
+
                 gui.add(options, "normales").onChange((val) => {
                     renderNormals = val;
+                    initShaders();
                 });
-
 
 
             }
@@ -410,14 +446,14 @@
                 var widthDelta = (castleWidth-windowSeparation)%(windowSeparation+width);
 
                 for(var i=1; i<=lengthWindowsAmount; i++){
-                    ventana = new Window(height,width,castleWidth+0.02,0,0);
+                    ventana = new Window([0, 102, 102],height,width,castleWidth+0.02,0,0);
                     ventana.rotateZ(Math.PI/2);
                     ventana.translate(0,i*windowSeparation+width/2+(i-1)*width-castleLength/2+lengthDelta/2,zCoord);
                     ventanas.push(ventana);
                 }
 
                 for(var i=1; i<=widthWindowsAmount; i++){
-                    ventana = new Window(height,width,castleLength+0.02,0,0);
+                    ventana = new Window([0, 102, 102],height,width,castleLength+0.02,0,0);
                     ventana.translate(0,i*windowSeparation+width/2+(i-1)*width-castleWidth/2+widthDelta/2,zCoord);
                     ventanas.push(ventana);
                 }
@@ -430,17 +466,17 @@
 
                 var bloques = [];
 
-                bloqueD1 = new Block(0.02,0.02,castleLength);
+                bloqueD1 = new Block([255, 204, 102],0.02,0.02,castleLength);
                 bloqueD1.translate(0,castleWidth/2,zCoord);
 
-                bloqueD2 = new Block(0.02,0.02,castleLength);
+                bloqueD2 = new Block([255, 204, 102],0.02,0.02,castleLength);
                 bloqueD2.translate(0,-castleWidth/2,zCoord);
 
-                bloqueD3 = new Block(0.02,0.02,castleWidth);
+                bloqueD3 = new Block([255, 204, 102],0.02,0.02,castleWidth);
                 bloqueD3.rotateZ(Math.PI/2);
                 bloqueD3.translate(0,castleLength/2,zCoord);
 
-                bloqueD4 = new Block(0.02,0.02,castleWidth);
+                bloqueD4 = new Block([255, 204, 102],0.02,0.02,castleWidth);
                 bloqueD4.rotateZ(Math.PI/2);
                 bloqueD4.translate(0,-castleLength/2,zCoord);
 
@@ -457,31 +493,31 @@
 
                 var castleHeight = castleFloors/4;
 
-                techo1 = new Roof();
+                techo1 = new Roof([0, 51, 102]);
                 techo1.translate(0,0,castleHeight*9);
 
-                techo2 = new Roof();
+                techo2 = new Roof([0, 51, 102]);
                 techo2.translate(0,0,castleHeight*9);
 
-                techo3 = new Roof();
+                techo3 = new Roof([0, 51, 102]);
                 techo3.translate(0,0,castleHeight*9);
 
-                techo4 = new Roof();
+                techo4 = new Roof([0, 51, 102]);
                 techo4.translate(0,0,castleHeight*9);
 
-                torreC1 = new TowerC(castleHeight*2,[techo1]);
+                torreC1 = new TowerC([255, 255, 204],castleHeight*2,[techo1]);
                 torreC1.translate(castleLength/2,castleWidth/2,-castleHeight/2);
                 torreC1.scale(0.15);
 
-                torreC2 = new TowerC(castleHeight*2,[techo2]);
+                torreC2 = new TowerC([255, 255, 204],castleHeight*2,[techo2]);
                 torreC2.translate(-castleLength/2,castleWidth/2,-castleHeight/2);
                 torreC2.scale(0.15);
 
-                torreC3 = new TowerC(castleHeight*2,[techo3]);           
+                torreC3 = new TowerC([255, 255, 204],castleHeight*2,[techo3]);           
                 torreC3.translate(castleLength/2,-castleWidth/2,-castleHeight/2);
                 torreC3.scale(0.15);
 
-                torreC4 = new TowerC(castleHeight*2,[techo4]);
+                torreC4 = new TowerC([255, 255, 204],castleHeight*2,[techo4]);
                 torreC4.translate(-castleLength/2,-castleWidth/2,-castleHeight/2);
                 torreC4.scale(0.15);
 
@@ -496,7 +532,7 @@
                     }
                 }
 
-                bloqueC = new Block(castleHeight,castleWidth,castleLength,0,0,children);
+                bloqueC = new Block([255, 255, 204],castleHeight,castleWidth,castleLength,0,0,children);
 
                 bloqueC.translate(0,0,0.25+castleHeight/2);
 
@@ -524,7 +560,7 @@
 
                     if(y < minY) {minY = y;}
 
-                    torre = new Tower(wallHeight);
+                    torre = new Tower([0, 102, 102],wallHeight);
                     torre.translate(x,y,0);
                     torre.scale(0.7);
 
@@ -542,20 +578,20 @@
 
                 }
 
-                objects.push(new Wall(pathPoints,wallHeight-0.3,0.6,0,0));
+                objects.push(new Wall([0, 102, 102],pathPoints,wallHeight-0.3,0.6,0,0));
 
-                murallaP1 = new Wall([[1,points[0][1]],[1,points[0][1]],points[0],points[0]],wallHeight-0.3,0.6,0,0);
-                murallaP2 = new Wall([points[wallSides-1],points[wallSides-1],[-1,points[wallSides-1][1]],[-1,points[wallSides-1][1]]],wallHeight-0.3,0.6,0,0);
+                murallaP1 = new Wall([0, 102, 102],[[1,points[0][1]],[1,points[0][1]],points[0],points[0]],wallHeight-0.3,0.6,0,0);
+                murallaP2 = new Wall([0, 102, 102],[points[wallSides-1],points[wallSides-1],[-1,points[wallSides-1][1]],[-1,points[wallSides-1][1]]],wallHeight-0.3,0.6,0,0);
 
-                bloqueP1 = new Block(0.2,3,wallHeight*4.5,0.01,0);
+                bloqueP1 = new Block([0, 102, 102],0.2,3,wallHeight*4.5,0.01,0);
                 bloqueP1.translate(1.7,0,1.5);
                 bloqueP1.rotateY(Math.PI/2);
-                bloqueP2 = new Block(0.2,3,wallHeight*4.5,0.01,0);
+                bloqueP2 = new Block([0, 102, 102],0.2,3,wallHeight*4.5,0.01,0);
                 bloqueP2.translate(-1.7,0,1.5);
                 bloqueP2.rotateY(Math.PI/2);
-                bloqueP3 = new Block(wallHeight*0.4,3,3.6,0,0);
+                bloqueP3 = new Block([0, 102, 102],wallHeight*0.4,3,3.6,0,0);
                 bloqueP3.translate(0,0,wallHeight*3.4);
-                bloquePuerta = new Block(0.2,wallHeight*3,3.2,0,0);
+                bloquePuerta = new Block([102, 61, 0],0.2,wallHeight*3,3.2,0,0);
                 bloquePuerta.translate(0,0,1.4);
                 bloquePuerta.translate(0,-1,-1);
                 bloquePuerta.rotateX(gateAngle*Math.PI/180);
@@ -581,63 +617,63 @@
 
             function drawCatapult(){
 
-                municion = new Sphere();
+                municion = new Sphere([163, 194, 194]);
                 municion.scale(0.4);
                 municion.translate(0,0,1.2);
 
-                cabeza = new Block(0.2,1.2,1.2,0,0,[municion]);
+                cabeza = new Block([102, 68, 0],0.2,1.2,1.2,0,0,[municion]);
                 cabeza.translate(-2.5,0,0.15);
 
-                sostenCP1 = new Block(0.03,0.2,0.4,0.01,0);
+                sostenCP1 = new Block([102, 68, 0],0.03,0.2,0.4,0.01,0);
                 sostenCP1.translate(0.2,0,-0.1);
                 sostenCP1.rotateY(Math.PI/2);
-                sostenCP2 = new Block(0.03,0.2,0.4,0.01,0);
+                sostenCP2 = new Block([102, 68, 0],0.03,0.2,0.4,0.01,0);
                 sostenCP2.translate(-0.2,0,-0.1);
                 sostenCP2.rotateY(Math.PI/2);
-                contraPeso = new Block(0.4,0.6,0.6,0,0);
+                contraPeso = new Block([117, 163, 163],0.4,0.6,0.6,0,0);
                 contraPeso.translate(0,0,-0.5);
 
-                ejeCP = new Cylinder(0.08,0.08,0.5,0,0,[sostenCP1,sostenCP2,contraPeso]);
+                ejeCP = new Cylinder([51, 34, 0],0.08,0.08,0.5,0,0,[sostenCP1,sostenCP2,contraPeso]);
                 ejeCP.translate(2.8,0,0);
                 ejeCP.rotateZ(Math.PI/2);
                 ejeCP.rotateX(-Math.PI*((Math.sin(t*20))*1/4+1/8));
 
-                pala = new Block(0.2,0.2,6,0.03,0, [ejeCP, cabeza]);
+                pala = new Block([102, 68, 0],0.2,0.2,6,0.03,0, [ejeCP, cabeza]);
                 pala.translate(0,1.6,0.2);
                 pala.rotateZ(-Math.PI/2);
 
-                ejeP = new Cylinder(0.25,0.25,2,0,0, [pala]);
+                ejeP = new Cylinder([51, 34, 0],0.25,0.25,2,0,0, [pala]);
                 ejeP.translate(0,0,0.7);
                 ejeP.rotateZ(Math.PI/2);
                 ejeP.rotateX(Math.PI*((Math.sin(t*20))*1/4+1/8));
-                sosten1 = new Block(0.1,0.7,2.4,0.05,0);
+                sosten1 = new Block([102, 68, 0],0.1,0.7,2.4,0.05,0);
                 sosten1.translate(0,0.8,0);
                 sosten1.rotateY(Math.PI/2);
                 sosten1.rotateX(Math.PI/2);
-                sosten2 = new Block(0.1,0.7,2.4,0.05,0);
+                sosten2 = new Block([102, 68, 0],0.1,0.7,2.4,0.05,0);
                 sosten2.translate(0,-0.8,0);
                 sosten2.rotateY(Math.PI/2);
                 sosten2.rotateX(Math.PI/2);
                 sosten = new Transformable([sosten1,sosten2,ejeP]);
                 sosten.translate(0.6,0,1.2);
 
-                ruedaD1 = new Cylinder(0.4,0.4,0.15,0,0);
+                ruedaD1 = new Cylinder([102, 68, 0],0.4,0.4,0.15,0,0);
                 ruedaD1.translate(1.35,0,0);
-                ruedaD2 = new Cylinder(0.4,0.4,0.15,0,0);
+                ruedaD2 = new Cylinder([102, 68, 0],0.4,0.4,0.15,0,0);
                 ruedaD2.translate(-1.35,0,0);
-                ejeD = new Cylinder(0.05,0.05,3,0,0, [ruedaD1,ruedaD2]);
+                ejeD = new Cylinder([51, 34, 0],0.05,0.05,3,0,0, [ruedaD1,ruedaD2]);
                 ejeD.translate(1.2,0,0);
                 ejeD.rotateZ(Math.PI/2);
 
-                ruedaT1 = new Cylinder(0.4,0.4,0.15,0,0);
+                ruedaT1 = new Cylinder([102, 68, 0],0.4,0.4,0.15,0,0);
                 ruedaT1.translate(1.35,0,0);
-                ruedaT2 = new Cylinder(0.4,0.4,0.15,0,0);
+                ruedaT2 = new Cylinder([102, 68, 0],0.4,0.4,0.15,0,0);
                 ruedaT2.translate(-1.35,0,0);
-                ejeT = new Cylinder(0.05,0.05,3,0,0, [ruedaT1,ruedaT2]);
+                ejeT = new Cylinder([51, 34, 0],0.05,0.05,3,0,0, [ruedaT1,ruedaT2]);
                 ejeT.translate(-1.2,0,0);
                 ejeT.rotateZ(Math.PI/2);
 
-                catapulta = new Block(0.2,2.5,3.5,0,0,[ejeD,ejeT,sosten]);
+                catapulta = new Block([102, 68, 0],0.2,2.5,3.5,0,0,[ejeD,ejeT,sosten]);
                 catapulta.rotateZ(catapultPos*Math.PI/180);
                 catapulta.translate(1.5,1.5,0.03);
                 catapulta.rotateZ(catapultRot*Math.PI/180+Math.PI*1/4);
@@ -654,19 +690,19 @@
 
                 t +=0.01;
 
-                agua = new Plane();
+                agua = new Plane([102, 217, 255]);
                 agua.translate(0,0,-0.1);
                 agua.rotateX(-Math.PI/2);
 
-                puente = new Block(0.2,2,4,0,0);
+                puente = new Block([92, 214, 92],0.2,2,4,0,0);
                 puente.scale(0.15);
                 puente.rotateZ(Math.PI/2);
                 puente.translate(-7.5,0,0.8);
 
-                plataforma = new Platform([drawCastle(),drawWalls(6),puente]);
+                plataforma = new Platform([92, 214, 92],[drawCastle(),drawWalls(6),puente]);
                 plataforma.translate(0,0,-0.2);
 
-                terreno = new Terrain([agua]);
+                terreno = new Terrain([92, 214, 92],[agua]);
                 terreno.rotateZ(Math.PI*22.5/180);
 
                 catapulta = drawCatapult();

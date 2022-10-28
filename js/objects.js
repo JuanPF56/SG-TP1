@@ -64,20 +64,30 @@ class Transformable {
 class Object3D extends Transformable {
 
     surface;
+    color;
 
     positionBuffer = [];
     normalBuffer = [];
+    colorBuffer = [];
     indexBuffer = [];
 
-    constructor(surface, children=[]){
+    constructor(color,surface,children=[]){
         super(children);
         this.surface = surface;
+        this.color = color;
     }
 
     setupBuffers(posMat, normMat) {
 
         this.positionBuffer = this.surface.getPositionBuffer(posMat);
         this.normalBuffer = this.surface.getNormalBuffer(normMat);
+
+        for(var i=0; i<this.positionBuffer.length; i += 3){
+            this.colorBuffer.push(this.color[0]/255);
+            this.colorBuffer.push(this.color[1]/255);
+            this.colorBuffer.push(this.color[2]/255);
+        }
+        
         this.indexBuffer = this.surface.getIndexBuffer();
 
         
@@ -93,6 +103,12 @@ class Object3D extends Transformable {
         webgl_normal_buffer.itemSize = 3;
         webgl_normal_buffer.numItems = this.normalBuffer.length / 3;
 
+        let webgl_color_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, webgl_color_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.colorBuffer), gl.STATIC_DRAW);
+        webgl_color_buffer.itemSize = 3;
+        webgl_color_buffer.numItems = this.colorBuffer.length / 3; 
+
         let webgl_index_buffer = gl.createBuffer();
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, webgl_index_buffer);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.indexBuffer), gl.STATIC_DRAW);
@@ -102,6 +118,7 @@ class Object3D extends Transformable {
         return {
             webgl_position_buffer,
             webgl_normal_buffer,
+            webgl_color_buffer,
             webgl_index_buffer
         }
 
@@ -128,6 +145,11 @@ class Object3D extends Transformable {
         gl.bindBuffer(gl.ARRAY_BUFFER, triangleBuffers.webgl_normal_buffer);
         gl.vertexAttribPointer(vertexNormalAttribute, 3, gl.FLOAT, false, 0, 0);
 
+        vertexColorAttribute = gl.getAttribLocation(glProgram, "aVertexColor");
+        gl.enableVertexAttribArray(vertexColorAttribute);
+        gl.bindBuffer(gl.ARRAY_BUFFER, triangleBuffers.webgl_color_buffer);
+        gl.vertexAttribPointer(vertexColorAttribute, 3, gl.FLOAT, false, 0, 0);
+
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, triangleBuffers.webgl_index_buffer);
         gl.drawElements(gl.TRIANGLE_STRIP, triangleBuffers.webgl_index_buffer.numItems, gl.UNSIGNED_SHORT, 0);
 
@@ -137,80 +159,80 @@ class Object3D extends Transformable {
 
 class Terrain extends Object3D{
 
-    constructor(children=[]){
-        super(new RevolutionSurface(new CubicBezier2D(readSVGpath("terreno")), 8, 8), children);
+    constructor(color,children=[]){
+        super(color,new RevolutionSurface(new CubicBezier2D(readSVGpath("terreno")), 8, 8), children);
     }
 
 }
 
 class Platform extends Object3D{
 
-    constructor(children=[]){
-        super(new RevolutionSurface(new CubicBezier2D(readSVGpath("plataforma")), 10, 20), children);
+    constructor(color,children=[]){
+        super(color,new RevolutionSurface(new CubicBezier2D(readSVGpath("plataforma")), 10, 20), children);
     }
 
 }
 
 class Tower extends Object3D{
 
-    constructor(height=1,children=[]){
+    constructor(color,height=1,children=[]){
         var path = readSVGpath("torre");
         for(var i=0;i<path.length;i++){
             if(i>16){
                 path[i][1] = path[i][1]*height;
             }
         }
-        super(new RevolutionSurface(new CubicBezier2D(path), 10, 20), children);
+        super(color,new RevolutionSurface(new CubicBezier2D(path), 10, 20), children);
     }
 
 }
 
 class TowerC extends Object3D{
 
-    constructor(height=1, children=[]){
+    constructor(color,height=1, children=[]){
         var path = readSVGpath("torreC");
         for(var i=0;i<path.length;i++){
             if(i>10){
                 path[i][1] = path[i][1]*height;
             }
         }
-        super(new RevolutionSurface(new CubicBezier2D(path), 10, 20), children);
+        super(color,new RevolutionSurface(new CubicBezier2D(path), 10, 20), children);
     }
 
 }
 
 class Roof extends Object3D{
 
-    constructor(children=[]){
-        super(new RevolutionSurface(new CubicBezier2D(readSVGpath("techoTC")), 10, 20), children);
+    constructor(color,children=[]){
+        super(color,new RevolutionSurface(new CubicBezier2D(readSVGpath("techoTC")), 10, 20), children);
     }
 
 }
 
 class Window extends Object3D{
 
-    constructor(height=1,width=1,length=5,scaleFactor=0,rotationFactor=0,children=[]){
-        super(new SweepSurface(new CubicBezier2D(readSVGpath("ventana")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),10,5,scaleFactor,rotationFactor,height,width), children);
+    constructor(color,height=1,width=1,length=5,scaleFactor=0,rotationFactor=0,children=[]){
+        super(color,new SweepSurface(new CubicBezier2D(readSVGpath("ventana")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),10,5,scaleFactor,rotationFactor,height,width), children);
     }
 }
 
 class Block extends Object3D{
 
-    constructor(height=1,width=1,length=2,scaleFactor=0,rotationFactor=0,children=[]){
-        super(new SweepSurface(new CubicBezier2D(readSVGpath("cuadrado")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),10,20,scaleFactor,rotationFactor,height,width), children);
+    constructor(color,height=1,width=1,length=2,scaleFactor=0,rotationFactor=0,children=[]){
+        super(color,new SweepSurface(new CubicBezier2D(readSVGpath("cuadrado")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),10,20,scaleFactor,rotationFactor,height,width), children);
     }
 }
 
 class Cylinder extends Object3D{
 
-    constructor(height=1,width=1,length=5,scaleFactor=0,rotationFactor=0,children=[]){
-        super(new SweepSurface(new CubicBezier2D(readSVGpath("circulo")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),10,20,scaleFactor,rotationFactor,height,width), children);
+    constructor(color,height=1,width=1,length=5,scaleFactor=0,rotationFactor=0,children=[]){
+        super(color,new SweepSurface(new CubicBezier2D(readSVGpath("circulo")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),10,20,scaleFactor,rotationFactor,height,width), children);
     }
 }
 
 class Wall extends Object3D{
 
-    constructor(path,height=1,width=1,scaleFactor=0,rotationFactor=0,children=[]){
+    constructor(color,path,height=1,width=1,scaleFactor=0,rotationFactor=0,children=[]){
 
         var shapePath = readSVGpath("muralla");
         for(var i=0;i<shapePath.length;i++){
@@ -220,19 +242,19 @@ class Wall extends Object3D{
         }
         var shapeCurve = new CubicBezier2D(shapePath);
         shapeCurve.setCenter([shapeCurve.getCenter()[0],-shapePath[0][1]]);
-        super(new SweepSurface(shapeCurve,new CubicBezier2D(path),10,20,scaleFactor,rotationFactor,1,width,false), children);
+        super(color,new SweepSurface(shapeCurve,new CubicBezier2D(path),10,20,scaleFactor,rotationFactor,1,width,false), children);
     }
 
 }
 
 class Plane extends Object3D{
-    constructor(children=[]){
-        super(new Surface(), children);
+    constructor(color,children=[]){
+        super(color,new Surface(), children);
     }
 }
 
 class Sphere extends Object3D{
-    constructor(children=[]){
-        super(new SphereSurf(), children);
+    constructor(color,children=[]){
+        super(color,new SphereSurf(), children);
     }
 }
