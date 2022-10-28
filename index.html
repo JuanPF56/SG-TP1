@@ -69,7 +69,7 @@
         <path id="torrePath" d="M 0 52.251 L 81.68 52.251 L 81.68 20.42 L 102.1 20.42 C 102.1 20.42 102.1 61.26 102.1 81.68 C 102.1 103.205 81.68 102.1 81.68 142.94 C 81.68 183.78 142.94 305.999 142.94 398.341 C 142.94 418.761 142.94 458.375 142.94 458.375"/>
         <path id="murallaPath" d="M 0 268.216 C 0 167.635 33.527 100.581 33.527 33.527 L 33.527 0 L 67.054 0 L 67.054 33.527 L 134.108 33.527 L 201.162 33.527 L 201.162 0 L 234.689 0 L 234.689 33.527 C 234.689 100.581 268.216 167.635 268.216 268.216 Z"/>
         <path id="torreCPath" d="M 0 0 L 61.746 0 C 61.746 0 61.594 81.68 61.594 122.52 C 61.594 135.432 41.52 141.9 41.174 163.36 C 40.423 209.907 41.174 449.24 41.174 449.24"/>
-        <path id="techoTCPath" d="M 0 0 C 0 0 0.009 84.835 72.081 141.892 C 31.241 141.892 0 141.891 0 141.891"/>
+        <path id="techoTCPath" d="M -0.426 0.077 C -0.426 0.077 3.931 4.647 9.101 20.497 C 40.414 116.496 81.254 135.925 81.254 143.017 C 81.254 148.347 -0.426 143.017 -0.426 143.017"/>
         <path id="ventanaPath" d="M 0 150 L 0 50 C 0 35 10 0 50 0 C 90 0 100 35 100 50 C 100 100 100 150 100 150 L 0 150 Z"/>
         <path id="circuloPath" d="M 200 100 C 200 155.228 155.228 200 100 200 C 44.771 200 0 155.228 0 100 C 0 44.771 44.771 0 100 0 C 155.228 0 200 44.771 200 100 Z"/>
         <path id="cuadradoPath" d="M 0 100 C 0 100 0 0 0 0 C 0 0 100 0 100 0 L 100 100 L 0 100 Z"/>
@@ -279,19 +279,19 @@
                 techo4 = new Roof();
                 techo4.translate(0,0,4.5);
 
-                torreC1 = new TowerC([techo1]);
+                torreC1 = new TowerC(1,[techo1]);
                 torreC1.translate(0.4,0.25,-0.3);
                 torreC1.scale(0.15);
 
-                torreC2 = new TowerC([techo2]);
+                torreC2 = new TowerC(1,[techo2]);
                 torreC2.translate(-0.4,0.25,-0.3);
                 torreC2.scale(0.15);
 
-                torreC3 = new TowerC([techo3]);           
+                torreC3 = new TowerC(1,[techo3]);           
                 torreC3.translate(0.4,-0.25,-0.3);
                 torreC3.scale(0.15);
 
-                torreC4 = new TowerC([techo4]);
+                torreC4 = new TowerC(1,[techo4]);
                 torreC4.translate(-0.4,-0.25,-0.3);
                 torreC4.scale(0.15);
 
@@ -349,14 +349,14 @@
 
             function drawWalls(){
 
-                torre1 = new Tower();
-                torre2 = new Tower();
-                torre3 = new Tower();
-                torre4 = new Tower();
-                torre5 = new Tower();
-                torre6 = new Tower();
-                torre7 = new Tower();
-                torre8 = new Tower();
+                torre1 = new Tower(0.9);
+                torre2 = new Tower(0.9);
+                torre3 = new Tower(0.9);
+                torre4 = new Tower(0.9);
+                torre5 = new Tower(0.9);
+                torre6 = new Tower(0.9);
+                torre7 = new Tower(0.9);
+                torre8 = new Tower(0.9);
 
                 torre1.translate(3,-6,0);
                 torre1.scale(0.7);
@@ -375,63 +375,63 @@
                 torre8.translate(6,-3,0);
                 torre8.scale(0.7);
 
-                muralla1 = new Wall(6,0,0);
-                muralla2 = new Wall(10,0,0);
-                muralla3 = new Wall(6,0,0);
-                muralla4 = new Wall(10,0,0);
-                muralla5 = new Wall(6,0,0);
-                muralla6 = new Wall(10,0,0);
-                muralla7 = new Wall(6,0,0);
+                muralla1 = new Wall(1,6,0,0);
+                muralla2 = new Wall(1,10,0,0);
+                muralla3 = new Wall(1,6,0,0);
+                muralla4 = new Wall(1,10,0,0);
+                muralla5 = new Wall(1,6,0,0);
+                muralla6 = new Wall(1,10,0,0);
+                muralla7 = new Wall(1,6,0,0);
 
-                muralla1.translate(4.5,-4.5,0.75);
+                muralla1.translate(4.5,-4.5,0);
                 muralla1.rotateZ(Math.PI/4);
                 muralla1.scale(0.6);
 
-                muralla2.translate(6,0,0.75);
+                muralla2.translate(6,0,0);
                 muralla2.rotateZ(Math.PI/2);
                 muralla2.scale(0.6);
 
-                muralla3.translate(4.5,4.5,0.75);
+                muralla3.translate(4.5,4.5,0);
                 muralla3.rotateZ(Math.PI*3/4);
                 muralla3.scale(0.6);
 
-                muralla4.translate(0,6,0.75);
+                muralla4.translate(0,6,0);
                 muralla4.rotateZ(Math.PI);
                 muralla4.scale(0.6);
 
-                muralla5.translate(-4.5,4.5,0.75);
+                muralla5.translate(-4.5,4.5,0);
                 muralla5.rotateZ(Math.PI*5/4);
                 muralla5.scale(0.6);
 
-                muralla6.translate(-6,0,0.75);
+                muralla6.translate(-6,0,0);
                 muralla6.rotateZ(-Math.PI/2);
                 muralla6.scale(0.6);
 
-                muralla7.translate(-4.5,-4.5,0.75);
+                muralla7.translate(-4.5,-4.5,0);
                 muralla7.rotateZ(-Math.PI/4);
                 muralla7.scale(0.6);
 
-                murallaP1 = new Wall(2.5,0,0);
-                murallaP1.translate(3,0,0);
-                murallaP2 = new Wall(2.5,0,0);
-                murallaP2.translate(-3,0,0);
+                murallaP1 = new Wall(1,2.8,0,0);
+                murallaP1.translate(3.2,0,0);
+                murallaP2 = new Wall(1,2.8,0,0);
+                murallaP2.translate(-3.2,0,0);
                 bloqueP1 = new Block(0.2,3,3.5,0.01,0);
-                bloqueP1.translate(1.8,0,0);
+                bloqueP1.translate(1.8,0,1.5);
                 bloqueP1.rotateY(Math.PI/2);
                 bloqueP2 = new Block(0.2,3,3.5,0.01,0);
-                bloqueP2.translate(-1.8,0,0);
+                bloqueP2.translate(-1.8,0,1.5);
                 bloqueP2.rotateY(Math.PI/2);
                 bloqueP3 = new Block(0.2,3,3.8,0,0);
-                bloqueP3.translate(0,0,1.8);
+                bloqueP3.translate(0,0,3.3);
                 bloquePuerta = new Block(0.2,2.5,3.4,0,0);
-                bloquePuerta.translate(0,-1,0);
-                bloquePuerta.translate(0,0,-1);
+                bloquePuerta.translate(0,0,1.4);
+                bloquePuerta.translate(0,-1,-1);
                 bloquePuerta.rotateX(Math.PI*((Math.sin(t))*1/4+1/4));
                 bloquePuerta.translate(0,0,1);
                 bloquePuerta.rotateX(Math.PI/2);
 
                 puerta = new Transformable([murallaP1,murallaP2,bloqueP1,bloqueP2,bloqueP3,bloquePuerta]);
-                puerta.translate(0,-6,0.8);
+                puerta.translate(0,-6,0);
                 puerta.scale(0.6);
 
                 pared = new Transformable([torre1,torre2,torre3,torre4,torre5,torre6,torre7,torre8,muralla1,muralla2,muralla3,muralla4,muralla5,muralla6,muralla7,puerta]);

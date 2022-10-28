@@ -37,6 +37,10 @@ class CubicBezier2D {
         return this.center;
     }
 
+    setCenter(center){
+        this.center = center;
+    }
+
     getSections(){
         return (this.controlPoints.length - 1)/3;
     }

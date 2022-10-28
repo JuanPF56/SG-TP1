@@ -149,16 +149,28 @@ class Platform extends Object3D{
 
 class Tower extends Object3D{
 
-    constructor(children=[]){
-        super(new RevolutionSurface(new CubicBezier2D(readSVGpath("torre")), 10, 20), children);
+    constructor(height=1,children=[]){
+        var path = readSVGpath("torre");
+        for(var i=0;i<path.length;i++){
+            if(i>12){
+                path[i][1] = path[i][1]*height;
+            }
+        }
+        super(new RevolutionSurface(new CubicBezier2D(path), 10, 20), children);
     }
 
 }
 
 class TowerC extends Object3D{
 
-    constructor(children=[]){
-        super(new RevolutionSurface(new CubicBezier2D(readSVGpath("torreC")), 10, 20), children);
+    constructor(height=1, children=[]){
+        var path = readSVGpath("torreC");
+        for(var i=0;i<path.length;i++){
+            if(i>10){
+                path[i][1] = path[i][1]*height;
+            }
+        }
+        super(new RevolutionSurface(new CubicBezier2D(path), 10, 20), children);
     }
 
 }
@@ -194,11 +206,17 @@ class Cylinder extends Object3D{
 
 class Wall extends Object3D{
 
-    constructor(length=5,scaleFactor=0,rotationFactor=0,children=[]){
+    constructor(height=1,length=5,scaleFactor=0,rotationFactor=0,children=[]){
 
-        var shapeCurve = new CubicBezier2D(readSVGpath("muralla"));
+        var path = readSVGpath("muralla")
+        for(var i=0;i<path.length;i++){
+            if(i<3 || i>22){
+                path[i][1] = path[i][1]*height;
+            }
+        }
+        var shapeCurve = new CubicBezier2D(path);
+        shapeCurve.setCenter([shapeCurve.getCenter()[0],-path[0][1]]);
         super(new SweepSurface(shapeCurve,new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),10,20,scaleFactor,rotationFactor,1,1,false), children);
-        mat4.translate(this.posMatrix,this.posMatrix,[0,0,shapeCurve.getCenter()[1]/10]);
     }
 
 }
