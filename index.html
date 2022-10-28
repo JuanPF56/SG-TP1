@@ -18,6 +18,7 @@
 
         <script type="text/javascript" src="js/gl-matrix.js"></script>
         <script type="text/javascript" src="js/jquery.min.js"></script>
+        <script type="text/javascript" src="js/dat.gui.js"></script>
         
         <script id="shader-vs" type="x-shader/x-vertex">
 
@@ -109,25 +110,53 @@
             var speedFactor = 0.01;
             var t = 0;
 
+            const options = {
+
+                pisos: 1,
+                ancho: 0.6,
+                largo: 0.6,
+                ladosMuralla: 8,
+                alturaMuralla: 1,
+                anguloPuerta: 0,
+                rotacionCatapulta: 0,
+                ubicacionCatapulta: 0,
+                normales: true
+
+            }
+
+            const windowSeparation = 0.1;
+
+            var castleFloors = 1;
+            var castleWidth = 0.6;
+            var castleLength = 0.6;
+            var wallSides = 8;
+            var wallHeight = 1;
+
+            var gateAngle = 0;
+            var catapultRot = 0;
+            var catapultPos = 0;
+
+            var renderNormals = true;
+
             var isMouseDown = false;
             var actualEvent;
 
             var mouse = {x: 0, y: 0};
 
-            $('body').mousemove(function(e){ 
+            $('canvas').mousemove(function(e){ 
                 mouse.x = e.clientX || e.pageX; 
                 mouse.y = e.clientY || e.pageY 
             });
             
-            $('body').mousedown(function(event){       
+            $('canvas').mousedown(function(event){       
                 isMouseDown = true;        
             });
 
-            $('body').mouseup(function(event){
+            $('canvas').mouseup(function(event){
                 isMouseDown = false;        
             });     
 
-            $('body').bind('mousewheel DOMMouseScroll', function(event){
+            $('canvas').bind('mousewheel DOMMouseScroll', function(event){
                 if(event.originalEvent.wheelDelta < 0){
                     ratio += 0.5;
                 }else if (ratio > 1){
@@ -150,6 +179,7 @@
                 if(gl) {
                     setupWebGL();
                     initShaders();
+                    initMenu();
                     setupVertexShaderMatrix();
                     tick();   
 
@@ -230,6 +260,59 @@
                 gl.uniformMatrix4fv(projMatrixUniform, false, projMatrix);
                 gl.uniformMatrix4fv(normalMatrixUniform, false, normalMatrix);
             } 
+
+            function initMenu(){
+
+                var gui = new dat.GUI();
+
+                const castleSettings = gui.addFolder("Castillo");
+                castleSettings.open();
+
+                castleSettings.add(options, "pisos",[1,2,3,4,5]);
+                castleSettings.add(options, "ancho",0.3,1,0.01);
+                castleSettings.add(options, "largo",0.3,1,0.01);
+                castleSettings.add(options, "ladosMuralla",4,8,1);
+                castleSettings.add(options, "alturaMuralla",0.1,2,0.01);
+
+
+                var renderButton = { "Generar escena":function(){
+                    castleFloors = options.pisos;
+                    castleWidth = options.ancho;
+                    castleLength = options.largo;
+                    wallSides = options.ladosMuralla;
+                    wallHeight = options.alturaMuralla;
+                }};
+
+                castleSettings.add(renderButton, "Generar escena");
+
+                const sceneSettings = gui.addFolder("Escena");
+                sceneSettings.open();
+
+
+                sceneSettings.add(options, "anguloPuerta",0,90,0.1).onChange((val) => {
+                    gateAngle = val;
+                });
+                sceneSettings.add(options, "rotacionCatapulta",0,360,1).onChange((val) => {
+                    catapultRot = val;
+                });
+                sceneSettings.add(options, "ubicacionCatapulta",0,360,1).onChange((val) => {
+                    catapultPos = val;
+                });
+
+                var shootCatapult = { "Disparar catapulta":function(){
+                    
+                }};
+
+                sceneSettings.add(shootCatapult, "Disparar catapulta");
+
+                gui.add(options, "normales").onChange((val) => {
+                    renderNormals = val;
+                });
+
+
+
+            }
+
         
             function readSVGpath(name){
 
@@ -265,84 +348,111 @@
 
             }
 
+            function createWindows(height, width, zCoord=0) {
+
+                var ventanas = [];
+
+                var lengthWindowsAmount = Math.trunc((castleLength-windowSeparation)/(windowSeparation+width));
+                var lengthDelta = (castleLength-windowSeparation)%(windowSeparation+width);
+
+                var widthWindowsAmount = Math.trunc((castleWidth-windowSeparation)/(windowSeparation+width));
+                var widthDelta = (castleWidth-windowSeparation)%(windowSeparation+width);
+
+                for(var i=1; i<=lengthWindowsAmount; i++){
+                    ventana = new Window(height,width,castleWidth+0.02,0,0);
+                    ventana.rotateZ(Math.PI/2);
+                    ventana.translate(0,i*windowSeparation+width/2+(i-1)*width-castleLength/2+lengthDelta/2,zCoord);
+                    ventanas.push(ventana);
+                }
+
+                for(var i=1; i<=widthWindowsAmount; i++){
+                    ventana = new Window(height,width,castleLength+0.02,0,0);
+                    ventana.translate(0,i*windowSeparation+width/2+(i-1)*width-castleWidth/2+widthDelta/2,zCoord);
+                    ventanas.push(ventana);
+                }
+
+                return ventanas;
+
+            }
+
+            function createDetails(zCoord=0){
+
+                var bloques = [];
+
+                bloqueD1 = new Block(0.02,0.02,castleLength);
+                bloqueD1.translate(0,castleWidth/2,zCoord);
+
+                bloqueD2 = new Block(0.02,0.02,castleLength);
+                bloqueD2.translate(0,-castleWidth/2,zCoord);
+
+                bloqueD3 = new Block(0.02,0.02,castleWidth);
+                bloqueD3.rotateZ(Math.PI/2);
+                bloqueD3.translate(0,castleLength/2,zCoord);
+
+                bloqueD4 = new Block(0.02,0.02,castleWidth);
+                bloqueD4.rotateZ(Math.PI/2);
+                bloqueD4.translate(0,-castleLength/2,zCoord);
+
+                bloques.push(bloqueD1);
+                bloques.push(bloqueD2);
+                bloques.push(bloqueD3);
+                bloques.push(bloqueD4);
+
+                return bloques;
+
+            }
+
             function drawCastle(){
 
+                var castleHeight = castleFloors/4;
+
                 techo1 = new Roof();
-                techo1.translate(0,0,4.5);
+                techo1.translate(0,0,castleHeight*9);
 
                 techo2 = new Roof();
-                techo2.translate(0,0,4.5);
+                techo2.translate(0,0,castleHeight*9);
 
                 techo3 = new Roof();
-                techo3.translate(0,0,4.5);
+                techo3.translate(0,0,castleHeight*9);
 
                 techo4 = new Roof();
-                techo4.translate(0,0,4.5);
+                techo4.translate(0,0,castleHeight*9);
 
-                torreC1 = new TowerC(1,[techo1]);
-                torreC1.translate(0.4,0.25,-0.3);
+                torreC1 = new TowerC(castleHeight*2,[techo1]);
+                torreC1.translate(castleLength/2,castleWidth/2,-castleHeight/2);
                 torreC1.scale(0.15);
 
-                torreC2 = new TowerC(1,[techo2]);
-                torreC2.translate(-0.4,0.25,-0.3);
+                torreC2 = new TowerC(castleHeight*2,[techo2]);
+                torreC2.translate(-castleLength/2,castleWidth/2,-castleHeight/2);
                 torreC2.scale(0.15);
 
-                torreC3 = new TowerC(1,[techo3]);           
-                torreC3.translate(0.4,-0.25,-0.3);
+                torreC3 = new TowerC(castleHeight*2,[techo3]);           
+                torreC3.translate(castleLength/2,-castleWidth/2,-castleHeight/2);
                 torreC3.scale(0.15);
 
-                torreC4 = new TowerC(1,[techo4]);
-                torreC4.translate(-0.4,-0.25,-0.3);
+                torreC4 = new TowerC(castleHeight*2,[techo4]);
+                torreC4.translate(-castleLength/2,-castleWidth/2,-castleHeight/2);
                 torreC4.scale(0.15);
 
-                bloqueD1 = new Block(0.02,0.02,0.75);
-                bloqueD1.translate(0,0.25,0);
 
-                bloqueD2 = new Block(0.02,0.02,0.75);
-                bloqueD2.translate(0,-0.25,0);
+                var children = [];
 
-                bloqueD3 = new Block(0.02,0.02,0.5);
-                bloqueD3.rotateZ(Math.PI/2);
-                bloqueD3.translate(0,0.375,0);
+                var children = children.concat([torreC1,torreC2,torreC3,torreC4]);
+                for(i=0; i<castleFloors; i++){
+                    children = children.concat(createWindows(0.08,0.08,((1+(i*2))*castleHeight/(castleFloors*2))-castleHeight/2));
+                    if(i>0){
+                        children = children.concat(createDetails(i*castleHeight/castleFloors-castleHeight/2));
+                    }
+                }
 
-                bloqueD4 = new Block(0.02,0.02,0.5);
-                bloqueD4.rotateZ(Math.PI/2);
-                bloqueD4.translate(0,-0.375,0);
+                bloqueC = new Block(castleHeight,castleWidth,castleLength,0,0,children);
 
-                ventana1 = new Window(0.08,0.08,0.525,0,0);
-                ventana1.rotateZ(Math.PI/2);
-                ventana1.translate(0,0,0.12);
-                ventana2 = new Window(0.08,0.08,0.525,0,0);
-                ventana2.rotateZ(Math.PI/2);
-                ventana2.translate(0,-0.2,0.12);
-                ventana3 = new Window(0.08,0.08,0.525,0,0);
-                ventana3.rotateZ(Math.PI/2);
-                ventana3.translate(0,0.2,0.12);
+                bloqueC.translate(0,0,0.25+castleHeight/2);
 
-                ventana4 = new Window(0.08,0.08,0.525,0,0);
-                ventana4.rotateZ(Math.PI/2);
-                ventana4.translate(0,0,-0.12);
-                ventana5 = new Window(0.08,0.08,0.525,0,0);
-                ventana5.rotateZ(Math.PI/2);
-                ventana5.translate(0,-0.2,-0.12);
-                ventana6 = new Window(0.08,0.08,0.525,0,0);
-                ventana6.rotateZ(Math.PI/2);
-                ventana6.translate(0,0.2,-0.12);
+                castillo = new Transformable([bloqueC]);
 
-                ventana7 = new Window(0.08,0.08,0.78,0,0);
-                ventana7.translate(0,0.08,0.12);
-                ventana8 = new Window(0.08,0.08,0.78,0,0);
-                ventana8.translate(0,-0.08,0.12);
-
-                ventana9 = new Window(0.08,0.08,0.78,0,0);
-                ventana9.translate(0,0.08,-0.12);
-                ventana10 = new Window(0.08,0.08,0.78,0,0);
-                ventana10.translate(0,-0.08,-0.12);
-
-                castillo = new Block(0.6,0.5,0.75,0,0,[torreC1,torreC2,torreC3,torreC4,bloqueD1,bloqueD2,bloqueD3,bloqueD4,ventana1,ventana2,ventana3,ventana4,ventana5,ventana6,ventana7,ventana8,ventana9,ventana10]);
-
-                castillo.translate(0,0,0.4);
-                castillo.scale(0.75);
+                castillo.scale(0.7);
+                
 
                 return castillo;
             }
@@ -530,9 +640,7 @@
                 puente.translate(-6.5,0,0.8);
 
                 plataforma = new Platform([drawCastle(),drawWalls(),puente]);
-                plataforma.scale(1.1);
                 plataforma.translate(0,0,-0.2);
-
 
                 terreno = new Terrain([agua]);
                 terreno.rotateZ(Math.PI*22.5/180);
