@@ -133,9 +133,14 @@
             var beta = Math.PI/2;
             var speedFactor = 0.01;
             var scrollSpeed = 0.5;
+
             var t = 0;
             var anim = 10; 
             var loaded = 1;
+            var s = 0;
+            var shot = 0;
+            var start;
+            var end;
 
             const options = {
 
@@ -623,19 +628,24 @@
 
             }
 
-            function shootProjectile(startMat, endMat){
+            function shootProjectile(projectile){
 
-                //var start = vec4.create();
-                //var end = vec4.create();
+                var startVec = vec4.create();
+                var endVec = vec4.create();
 
-                //vec4.transformMat4(start,start,startMat);
-                //vec4.transformMat4(end,end,endMat);
+                mat4.getTranslation(startVec,start);
+                mat4.getTranslation(endVec,end);
 
-                //var tangent = end - start;
+                var speed = vec3.fromValues((endVec[0] - startVec[0])*7, (endVec[1] - startVec[1])*7, (endVec[2] - startVec[2])*7);
 
-                //var m = mat4.create();
+                var m = mat4.create();
 
-                //Falta resolver la trayectoria del proyectil.
+                mat4.translate(m,m,[endVec[0]+speed[0]*s,endVec[1]+speed[1]*s,endVec[2]+speed[2]*s-(1/2)*0.98*(s**2)]);
+                mat4.scale(m,m,[0.02,0.02,0.02]);
+
+                projectile.setPosMatrix(m);
+
+                s += 0.25;
 
             }
 
@@ -645,28 +655,17 @@
                 municion.scale(0.4*loaded);
                 municion.translate(0,0,1.2);
 
-                var start;
+                proyectil = new Sphere([163, 194, 194]);
+                proyectil.scale(0.4*shot);
 
-                if(anim == 0){
-                    start = municion.getCompletePosMatrix();
+                if (shot == 1){
+                    shootProjectile(proyectil);
+                } 
+
+                if(s == 5){
+                    shot = 0;
+                    s = 0;
                 }
-
-                if(anim<5){
-                    if(anim == 1 && loaded == 1){
-                        loaded = 0;
-                        shootProjectile(start, municion.getCompletePosMatrix());
-                    } 
-                    t = 1;
-                } else if(anim==5){
-                    t = 0.001;
-                } else if (anim>5.1 && anim<6){
-                    t = 0.01;
-                } else{
-                    t = 0;
-                }
-
-                anim += t;
-
 
                 cabeza = new Block([102, 68, 0],0.2,1.2,1.2,0,0,[municion]);
                 cabeza.translate(-2.5,0,0.15);
@@ -726,7 +725,7 @@
                 catapulta.rotateZ(catapultRot*Math.PI/180+Math.PI*1/4);
                 catapulta.scale(0.06);
 
-                return catapulta;
+                return {catapulta, proyectil};
 
             }
             
@@ -750,11 +749,33 @@
                 terreno = new Terrain([92, 214, 92],[agua]);
                 terreno.rotateZ(Math.PI*22.5/180);
 
-                catapulta = drawCatapult();
+                cat = drawCatapult();
 
-                escena = new Transformable([terreno,plataforma,catapulta]);
+                escena = new Transformable([terreno,plataforma,cat.catapulta,cat.proyectil]);
 
                 escena.draw(mat4.create(),mat4.create());
+
+                if(anim == 0 && loaded == 1 && shot == 0){
+                    start = municion.getCompletePosMatrix();
+                }
+
+                if(anim<5){
+                    if(anim == 1 && loaded == 1 && shot == 0){
+                        end = municion.getCompletePosMatrix();
+                        loaded = 0;
+                        shot = 1;
+                    } 
+                    t = 1;
+                } else if(anim==5){
+                    t = 0.001;
+                } else if (anim>5.1 && anim<6){
+                    t = 0.01;
+                } else{
+                    t = 0;
+                }
+
+                anim += t;
+
             }
 
  
