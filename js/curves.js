@@ -253,12 +253,12 @@ class CurveSampler {
 
                 var posVec = this.curve.getPosition(i+k/pointsPerSection);
 
-                var tangVec = this.curve.getTangent(i+k/pointsPerSection);
-                var normVec = this.curve.getNormal(i+k/pointsPerSection);
-
-                if(i==0 && k==0){
-                    var tangVec = this.curve.getTangent(i+(k+1)/pointsPerSection);
-                    var normVec = this.curve.getNormal(i+(k+1)/pointsPerSection);
+                if(k==0){
+                    var tangVec = this.curve.getTangent(i+0.01);
+                    var normVec = this.curve.getNormal(i+0.01);
+                } else {
+                    var tangVec = this.curve.getTangent(i+k/pointsPerSection-0.01);
+                    var normVec = this.curve.getNormal(i+k/pointsPerSection-0.01)
                 }
 
                 posVectors.push(posVec);

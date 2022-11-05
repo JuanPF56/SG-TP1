@@ -217,7 +217,7 @@ class Roof extends Object3D{
 class Window extends Object3D{
 
     constructor(color,height=1,width=1,length=5,scaleFactor=0,rotationFactor=0,children=[]){
-        super(color,new SweepSurface(new CubicBezier2D(readSVGpath("ventana")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),10,5,scaleFactor,rotationFactor,height,width), children);
+        super(color,new SweepSurface(new CubicBezier2D(readSVGpath("ventana")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),10,20,scaleFactor,rotationFactor,height,width), children);
     }
 }
 

@@ -274,6 +274,14 @@ class SweepSurface extends Surface{
                     positionBuffer.push(pos[1]);
                     positionBuffer.push(pos[2]);
                 }
+                for (var j=0; j < this.rows; j++) {
+                    var sp = this.shapeVectors.posVectors[j];
+                    pos = vec4.fromValues(sp[0]-center[0],sp[1]+center[1],0.0,1);  
+                    vec4.transformMat4(pos,pos,m);
+                    positionBuffer.push(pos[0]);
+                    positionBuffer.push(pos[1]);
+                    positionBuffer.push(pos[2]);
+                }
             }      
 
 
@@ -292,6 +300,14 @@ class SweepSurface extends Surface{
             //Tapa 2
 
             if (i == this.cols - 1 && this.closed){
+                for (var j=0; j < this.rows; j++) {
+                    var sp = this.shapeVectors.posVectors[j];
+                    pos = vec4.fromValues(sp[0]-center[0],sp[1]+center[1],0.0,1);  
+                    vec4.transformMat4(pos,pos,m);
+                    positionBuffer.push(pos[0]);
+                    positionBuffer.push(pos[1]);
+                    positionBuffer.push(pos[2]);
+                }
                 for (var j=0; j < this.rows; j++) {
                     pos = vec4.fromValues(0,0,0,1);
                     vec4.transformMat4(pos,pos,m);
@@ -344,6 +360,17 @@ class SweepSurface extends Surface{
                     normalBuffer.push(normalVec[1]);
                     normalBuffer.push(normalVec[2]);
                 }
+                for (var j=0; j < this.rows; j++) {
+                    nrm = vec4.fromValues(0,0,-1,1);
+                    vec4.transformMat4(nrm,nrm,m);
+
+                    var normalVec = vec3.fromValues(nrm[0],nrm[1],nrm[2]); 
+                    vec3.normalize(normalVec,normalVec);
+
+                    normalBuffer.push(normalVec[0]);
+                    normalBuffer.push(normalVec[1]);
+                    normalBuffer.push(normalVec[2]);
+                }
             }
 
             for (var j=0; j < this.rows; j++) {
@@ -374,6 +401,17 @@ class SweepSurface extends Surface{
                     normalBuffer.push(normalVec[1]);
                     normalBuffer.push(normalVec[2]);
                 }
+                for (var j=0; j < this.rows; j++) {
+                    nrm = vec4.fromValues(0,0,1,1);
+                    vec4.transformMat4(nrm,nrm,m);
+
+                    var normalVec = vec3.fromValues(nrm[0],nrm[1],nrm[2]); 
+                    vec3.normalize(normalVec,normalVec);
+
+                    normalBuffer.push(normalVec[0]);
+                    normalBuffer.push(normalVec[1]);
+                    normalBuffer.push(normalVec[2]);
+                }
 
             }
         }
@@ -388,7 +426,7 @@ class SweepSurface extends Surface{
 
         var a = -2;
 
-        if (this.closed){a=0;}
+        if (this.closed){a=2;}
 
         for (var i=0; i < this.cols + 1 + a; i++) {
 
