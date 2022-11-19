@@ -27,6 +27,7 @@
             attribute vec3 aVertexPosition;
             attribute vec3 aVertexNormal;
             attribute vec3 aVertexColor;
+            attribute vec2 aVertexUv;
 
             uniform mat4 modelMatrix;            
             uniform mat4 viewMatrix;
@@ -37,14 +38,16 @@
             varying vec3 vNormal;    
             varying vec3 vPosWorld;  
             varying highp vec3 vColor;
+            varying highp vec2 vUv;
 
             void main(void) {
+
                 gl_Position = projMatrix * viewMatrix * modelMatrix * vec4(aVertexPosition, 1.0);
 
-                vPosWorld=(modelMatrix*vec4(aVertexPosition,1.0)).xyz;    //la posicion en coordenadas de mundo
-                vNormal=(normalMatrix*vec4(aVertexNormal,1.0)).xyz;       //la normal en coordenadas de mundo
+                vPosWorld=(modelMatrix*vec4(aVertexPosition,1.0)).xyz;
+                vNormal=(normalMatrix*vec4(aVertexNormal,1.0)).xyz; 
                 vColor = aVertexColor;
-
+                vUv = aVertexUv;
                 
             }
         </script>
@@ -79,6 +82,22 @@
                 gl_FragColor = vec4(color,1.0);
 
             }
+        </script>
+
+        <script id="shader-fs-textures" type="x-shader/x-fragment">
+
+            precision highp float;
+            varying vec3 vNormal;
+            varying vec3 vPosWorld;
+            varying highp vec3 vColor;
+            varying highp vec2 vUv;
+            uniform sampler2D uSampler;
+            
+            void main(void) {
+               vec4 textureColor = texture2D(uSampler,vUv);
+               gl_FragColor = vec4(textureColor.xyz,1.0);
+            }
+
         </script>
 
 
@@ -118,13 +137,17 @@
             vertexNormalAttribute = null,
             trianglesNormalBuffer = null,
             vertexColorAttribute = null,
-            trianglesColorBuffer = null;
+            trianglesColorBuffer = null,
+            vertexUVAttribute = null,
+            trianglesUVBuffer = null,
             trianglesIndexBuffer = null;
                
             var modelMatrix = mat4.create();
             var viewMatrix = mat4.create();
             var projMatrix = mat4.create();
             var normalMatrix = mat4.create();
+
+            var texture = null;
 
             var previousClientX = 0;
             var previousClientY = 0;
@@ -153,12 +176,12 @@
                 rotacionCatapulta: 180,
                 ubicacionCatapulta: 0,
                 camara: 1,
-                normales: false
+                renderizado: 0
 
             }
 
             var camera = 1;
-            var renderNormals = false;
+            var renderType = 0;
 
             const windowSeparation = 0.1;
 
@@ -245,6 +268,7 @@
                  
             });    
 
+
          
             function initWebGL(){
 
@@ -258,14 +282,39 @@
                 }
 
                 if(gl) {
+                    initTexture();
                     setupWebGL();
                     initShaders();
                     initMenu();
                     setupVertexShaderMatrix();
+                    texture.image.src = "img/uv.jpg";
                     tick();   
 
                 }else{    
                     alert(  "Error: Your browser does not appear to support WebGL.");
+                }
+
+            }
+
+            function initTexture(){
+            
+                texture = gl.createTexture();
+                texture.image = new Image();
+
+                texture.image.onload = function () {
+                
+                    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);                   // invierto el ejeY                 
+                    gl.bindTexture(gl.TEXTURE_2D, texture);                         // activo la textura
+                    
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image); // cargo el bitmap en la GPU
+                    
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);                  // selecciono filtro de magnificacion
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);   // selecciono filtro de minificacion
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+                    
+                    gl.generateMipmap(gl.TEXTURE_2D);       // genero los mipmaps
+                    gl.bindTexture(gl.TEXTURE_2D, null);
                 }
 
             }
@@ -293,8 +342,9 @@
                     
                     
             function initShaders() {
-                //get shader source
-                if(renderNormals) {var fs_source = document.getElementById('shader-fs-normals').innerHTML;}
+
+                if(renderType == 0) {var fs_source = document.getElementById('shader-fs-textures').innerHTML;}
+                else if(renderType == 2) {var fs_source = document.getElementById('shader-fs-normals').innerHTML;}
                 else {var fs_source = document.getElementById('shader-fs-colors').innerHTML;}
                 var vs_source = document.getElementById('shader-vs').innerHTML;
 
@@ -316,6 +366,9 @@
                 
                 //use program
                 gl.useProgram(glProgram);
+
+                if(renderType == 0) {glProgram.samplerUniform = gl.getUniformLocation(glProgram, "uSampler");}
+
             }
             
             function makeShader(src, type){
@@ -405,8 +458,8 @@
                     }
                 }).listen();
 
-                gui.add(options, "normales").onChange((val) => {
-                    renderNormals = val;
+                gui.add(options, "renderizado", { "Texturas": '0', "Colores": '1', "Normales": '2'}).onChange((val) => {
+                    renderType = val;
                     initShaders();
                 });
 
@@ -851,7 +904,6 @@
                     mat4.mul(normalMatrix,viewMatrix,modelMatrix);
 
                 }
-
 
 
                 mat4.invert(normalMatrix,normalMatrix);

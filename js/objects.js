@@ -74,6 +74,7 @@ class Object3D extends Transformable {
     positionBuffer = [];
     normalBuffer = [];
     colorBuffer = [];
+    uvBuffer = [];
     indexBuffer = [];
 
     constructor(color,surface,children=[]){
@@ -86,6 +87,7 @@ class Object3D extends Transformable {
 
         this.positionBuffer = this.surface.getPositionBuffer(posMat);
         this.normalBuffer = this.surface.getNormalBuffer(normMat);
+        this.uvBuffer = this.surface.getUVBuffer();
 
         for(var i=0; i<this.positionBuffer.length; i += 3){
             this.colorBuffer.push(this.color[0]/255);
@@ -94,7 +96,6 @@ class Object3D extends Transformable {
         }
         
         this.indexBuffer = this.surface.getIndexBuffer();
-
         
         let webgl_position_buffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, webgl_position_buffer);
@@ -114,6 +115,12 @@ class Object3D extends Transformable {
         webgl_color_buffer.itemSize = 3;
         webgl_color_buffer.numItems = this.colorBuffer.length / 3; 
 
+        let webgl_uv_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, webgl_uv_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.uvBuffer), gl.STATIC_DRAW);    
+        webgl_uv_buffer.itemSize = 2;
+        webgl_uv_buffer.numItems = this.uvBuffer.length / 2; 
+
         let webgl_index_buffer = gl.createBuffer();
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, webgl_index_buffer);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.indexBuffer), gl.STATIC_DRAW);
@@ -124,6 +131,7 @@ class Object3D extends Transformable {
             webgl_position_buffer,
             webgl_normal_buffer,
             webgl_color_buffer,
+            webgl_uv_buffer,
             webgl_index_buffer
         }
 
@@ -155,6 +163,15 @@ class Object3D extends Transformable {
         gl.bindBuffer(gl.ARRAY_BUFFER, triangleBuffers.webgl_color_buffer);
         gl.vertexAttribPointer(vertexColorAttribute, 3, gl.FLOAT, false, 0, 0);
 
+        vertexUVAttribute = gl.getAttribLocation(glProgram, "aVertexUv");
+        gl.enableVertexAttribArray(vertexUVAttribute);
+        gl.bindBuffer(gl.ARRAY_BUFFER, triangleBuffers.webgl_uv_buffer);
+        gl.vertexAttribPointer(vertexUVAttribute, 2, gl.FLOAT, false, 0, 0);
+
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.uniform1i(glProgram.samplerUniform, 0);
+
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, triangleBuffers.webgl_index_buffer);
         gl.drawElements(gl.TRIANGLE_STRIP, triangleBuffers.webgl_index_buffer.numItems, gl.UNSIGNED_SHORT, 0);
 
@@ -173,7 +190,7 @@ class Terrain extends Object3D{
 class Platform extends Object3D{
 
     constructor(color,children=[]){
-        super(color,new RevolutionSurface(new CubicBezier2D(readSVGpath("plataforma")), 10, 20), children);
+        super(color,new RevolutionSurface(new CubicBezier2D(readSVGpath("plataforma")), 5, 10), children);
     }
 
 }
@@ -187,7 +204,7 @@ class Tower extends Object3D{
                 path[i][1] = path[i][1]*height;
             }
         }
-        super(color,new RevolutionSurface(new CubicBezier2D(path), 10, 20), children);
+        super(color,new RevolutionSurface(new CubicBezier2D(path), 5, 10), children);
     }
 
 }
@@ -201,7 +218,7 @@ class TowerC extends Object3D{
                 path[i][1] = path[i][1]*height;
             }
         }
-        super(color,new RevolutionSurface(new CubicBezier2D(path), 10, 20), children);
+        super(color,new RevolutionSurface(new CubicBezier2D(path), 5, 10), children);
     }
 
 }
@@ -209,7 +226,7 @@ class TowerC extends Object3D{
 class Roof extends Object3D{
 
     constructor(color,children=[]){
-        super(color,new RevolutionSurface(new CubicBezier2D(readSVGpath("techoTC")), 10, 20), children);
+        super(color,new RevolutionSurface(new CubicBezier2D(readSVGpath("techoTC")), 5, 10), children);
     }
 
 }
@@ -217,21 +234,21 @@ class Roof extends Object3D{
 class Window extends Object3D{
 
     constructor(color,height=1,width=1,length=5,scaleFactor=0,rotationFactor=0,children=[]){
-        super(color,new SweepSurface(new CubicBezier2D(readSVGpath("ventana")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),10,20,scaleFactor,rotationFactor,height,width), children);
+        super(color,new SweepSurface(new CubicBezier2D(readSVGpath("ventana")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),5,10,scaleFactor,rotationFactor,height,width), children);
     }
 }
 
 class Block extends Object3D{
 
     constructor(color,height=1,width=1,length=2,scaleFactor=0,rotationFactor=0,children=[]){
-        super(color,new SweepSurface(new CubicBezier2D(readSVGpath("cuadrado")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),10,20,scaleFactor,rotationFactor,height,width), children);
+        super(color,new SweepSurface(new CubicBezier2D(readSVGpath("cuadrado")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),5,10,scaleFactor,rotationFactor,height,width), children);
     }
 }
 
 class Cylinder extends Object3D{
 
     constructor(color,height=1,width=1,length=5,scaleFactor=0,rotationFactor=0,children=[]){
-        super(color,new SweepSurface(new CubicBezier2D(readSVGpath("circulo")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),10,20,scaleFactor,rotationFactor,height,width), children);
+        super(color,new SweepSurface(new CubicBezier2D(readSVGpath("circulo")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),5,10,scaleFactor,rotationFactor,height,width), children);
     }
 }
 
@@ -247,7 +264,7 @@ class Wall extends Object3D{
         }
         var shapeCurve = new CubicBezier2D(shapePath);
         shapeCurve.setCenter([shapeCurve.getCenter()[0],-shapePath[0][1]]);
-        super(color,new SweepSurface(shapeCurve,new CubicBezier2D(path),10,20,scaleFactor,rotationFactor,1,width,false), children);
+        super(color,new SweepSurface(shapeCurve,new CubicBezier2D(path),5,10,scaleFactor,rotationFactor,1,width,false), children);
     }
 
 }

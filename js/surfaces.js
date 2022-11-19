@@ -1,7 +1,7 @@
 class Surface {
 
-    rows = 50;
-    cols = 50;
+    rows = 20;
+    cols = 20;
 
     calculatePos(u,v){
 
@@ -83,6 +83,27 @@ class Surface {
         }
 
         return normalBuffer;
+
+    }
+
+    getUVBuffer(){
+
+        var uvBuffer = [];
+        
+        for (var i=0; i <= this.rows; i++) {
+            for (var j=0; j <= this.cols; j++) {
+
+                var u = j/this.cols;
+                var v = i/this.rows;
+
+                uvBuffer.push(u);
+                uvBuffer.push(v);
+
+            }
+
+        }
+
+        return uvBuffer;
 
     }
 
@@ -178,6 +199,26 @@ class RevolutionSurface extends Surface{
         }
 
         return normalBuffer;
+
+    }
+
+    getUVBuffer(){
+
+        var uvBuffer = [];
+        
+        for (var i=0; i < this.rows; i++) {
+            for (var j=0; j < this.cols; j++) {
+
+                var u = i*0.1;
+                var v = j*0.1;
+
+                uvBuffer.push(u);
+                uvBuffer.push(v);
+
+            }
+        }
+
+        return uvBuffer;
 
     }
 
@@ -417,6 +458,64 @@ class SweepSurface extends Surface{
         }
 
         return normalBuffer;
+
+    }
+
+    getUVBuffer(){
+
+        var uvBuffer = [];
+        
+            var positionBuffer = [];
+        
+        for (var i=0; i < this.cols; i++) {
+
+            var center = this.shapeVectors.center;
+            var bottomLeft = this.shapeVectors.bottomLeft;
+            var topRight = this.shapeVectors.topRight;
+
+    
+            //Tapa 1
+
+            if(i == 0 && this.closed){
+                for (var j=0; j < this.rows; j++) {
+                    uvBuffer.push(0.5);
+                    uvBuffer.push(0.5);
+                }
+                for (var j=0; j < this.rows; j++) {
+                    var sp = this.shapeVectors.posVectors[j];
+                    uvBuffer.push(0.5+(sp[0]-center[0]));
+                    uvBuffer.push(0.5+(sp[1]+center[1]));
+                }
+            }      
+
+
+            for (var j=0; j < this.rows; j++) {
+
+                var u = i*0.1;
+                var v = j*0.1;
+                
+                uvBuffer.push(u);
+                uvBuffer.push(v);
+
+            }
+
+            //Tapa 2
+
+            if (i == this.cols - 1 && this.closed){
+                for (var j=0; j < this.rows; j++) {
+                    var sp = this.shapeVectors.posVectors[j];
+                    uvBuffer.push(0.5+(sp[0]-center[0]));
+                    uvBuffer.push(0.5+(sp[1]+center[1]));
+                }
+                for (var j=0; j < this.rows; j++) {
+                    uvBuffer.push(0.5);
+                    uvBuffer.push(0.5);
+                }
+            }  
+
+        }
+
+        return uvBuffer;
 
     }
 

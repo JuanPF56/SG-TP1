@@ -10,10 +10,11 @@ class CubicBezier2D {
         this.first = controlPoints[0];
         this.last = controlPoints[controlPoints.length-1];
         this.center = [0,0];
-        var maxX=0;
-        var minX=0;
-        var maxY=0;
-        var minY=0;
+
+        let maxX=0;
+        let minX=0;
+        let maxY=0;
+        let minY=0;
         for (var i = 0; i < this.controlPoints.length; i++){
             if (controlPoints[i][0] > maxX) {maxX = controlPoints[i][0];}
             if (controlPoints[i][0] < minX) {minX = controlPoints[i][0];}
@@ -242,6 +243,10 @@ class CurveSampler {
         var center = this.curve.getCenter();
         var first = this.curve.getFirst();
         var last = this.curve.getLast();
+        let maxX=0;
+        let minX=0;
+        let maxY=0;
+        let minY=0;
 
         var posVectors = [];
         var tangVectors = [];
@@ -261,9 +266,18 @@ class CurveSampler {
                     var normVec = this.curve.getNormal(i+k/pointsPerSection-0.01)
                 }
 
+                if (posVec[0] > maxX) {maxX = posVec[0];}
+                if (posVec[0] < minX) {minX = posVec[0];}
+                if (posVec[1] > maxY) {maxY = posVec[1];}
+                if (posVec[1] < minY) {minY = posVec[1];}
+
                 posVectors.push(posVec);
                 tangVectors.push(tangVec);
                 normVectors.push(normVec);
+
+                var bottomLeft = vec2.fromValues(minX,minY);
+                var topRight = vec2.fromValues(maxX,maxY);
+
 
 
                 //if(this.curve instanceof CubicBezier3D){
@@ -283,7 +297,9 @@ class CurveSampler {
             normVectors,
             center,
             first,
-            last
+            last,
+            bottomLeft,
+            topRight
             //biNormVectors
         }
 
