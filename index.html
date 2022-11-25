@@ -956,16 +956,15 @@
                     forward = vec4.fromValues(0,0.1,0,1);
                     right = vec4.fromValues(0.1,0,0,1);
 
-                    var ang=fpRotation.z;
+                    var ang = - fpRotation.z - alpha;
                     var m = mat4.create();
-                    mat4.rotateZ(m,m,-ang);
+                    mat4.rotateZ(m,m,ang);
 
                     vec4.transformMat4(forward,forward,m);
                     vec4.transformMat4(right,right,m);
 
-                    mat4.rotateY(viewMatrix,viewMatrix,ang);
                     mat4.rotateX(viewMatrix,viewMatrix, -beta);
-                    mat4.rotateZ(viewMatrix,viewMatrix, alpha);
+                    mat4.rotateZ(viewMatrix,viewMatrix, -ang);
                     mat4.translate(viewMatrix,viewMatrix,[fpPosition.x,fpPosition.y+5,-0.1]);
 
                     mat4.mul(normalMatrix,viewMatrix,modelMatrix);
