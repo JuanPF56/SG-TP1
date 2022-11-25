@@ -188,7 +188,7 @@ class Object3D extends Transformable {
 class Terrain extends Object3D{
 
     constructor(color,children=[]){
-        super(color,new RevolutionSurface(new CubicBezier2D(readSVGpath("terreno")), 8, 8, 2, 2), children);
+        super(color,new RevolutionSurface(new CubicBezier2D(readSVGpath("terreno")), 8, 8, 10), children);
         this.texture = textures.grass;
     }
 
@@ -197,7 +197,7 @@ class Terrain extends Object3D{
 class Platform extends Object3D{
 
     constructor(color,children=[]){
-        super(color,new RevolutionSurface(new CubicBezier2D(readSVGpath("plataforma")), 5, 10, 1, 1), children);
+        super(color,new RevolutionSurface(new CubicBezier2D(readSVGpath("plataforma")), 5, 10, 5), children);
         this.texture = textures.grass;
     }
 
@@ -212,7 +212,7 @@ class Tower extends Object3D{
                 path[i][1] = path[i][1]*height;
             }
         }
-        super(color,new RevolutionSurface(new CubicBezier2D(path), 10, 15, 0.2, 0.2), children);
+        super(color,new RevolutionSurface(new CubicBezier2D(path), 10, 15, 1), children);
         this.texture = textures.brick;
     }
 
@@ -227,7 +227,7 @@ class TowerC extends Object3D{
                 path[i][1] = path[i][1]*height;
             }
         }
-        super(color,new RevolutionSurface(new CubicBezier2D(path), 10, 15,0.2,0.2), children);
+        super(color,new RevolutionSurface(new CubicBezier2D(path), 10, 15, 1), children);
         this.texture = textures.marble;
     }
 
@@ -236,7 +236,7 @@ class TowerC extends Object3D{
 class Roof extends Object3D{
 
     constructor(color,children=[]){
-        super(color,new RevolutionSurface(new CubicBezier2D(readSVGpath("techoTC")), 5, 10), children);
+        super(color,new RevolutionSurface(new CubicBezier2D(readSVGpath("techoTC")), 5, 10, 2), children);
         this.texture = textures.tiles;
     }
 
@@ -245,7 +245,7 @@ class Roof extends Object3D{
 class Window extends Object3D{
 
     constructor(color,height=1,width=1,length=5,scaleFactor=0,rotationFactor=0,children=[]){
-        super(color,new SweepSurface(new CubicBezier2D(readSVGpath("ventana")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),5,10,scaleFactor,rotationFactor,height,width, 0.2, 0.2, 0.4), children);
+        super(color,new SweepSurface(new CubicBezier2D(readSVGpath("ventana")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),5,10,scaleFactor,rotationFactor,height,width, 0.4), children);
         this.texture = textures.glass;
     }
 }
@@ -253,20 +253,20 @@ class Window extends Object3D{
 class Block extends Object3D{
 
     constructor(color,height=1,width=1,length=2,scaleFactor=0,rotationFactor=0,children=[]){
-        super(color,new SweepSurface(new CubicBezier2D(readSVGpath("cuadrado")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),5,10,scaleFactor,rotationFactor,height,width, 0.2, 0.2, 0.4), children);
+        super(color,new SweepSurface(new CubicBezier2D(readSVGpath("cuadrado")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),5,10,scaleFactor,rotationFactor,height,width, 0.2), children);
     }
 }
 
 class Cylinder extends Object3D{
 
     constructor(color,height=1,width=1,length=5,scaleFactor=0,rotationFactor=0,children=[]){
-        super(color,new SweepSurface(new CubicBezier2D(readSVGpath("circulo")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),5,10,scaleFactor,rotationFactor,height,width, 0.2, 0.2, 0.4), children);
+        super(color,new SweepSurface(new CubicBezier2D(readSVGpath("circulo")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),5,10,scaleFactor,rotationFactor,height,width, 0.4), children);
     }
 }
 
 class Wall extends Object3D{
 
-    constructor(color,path,height=1,width=1,scaleFactor=0,rotationFactor=0,children=[]){
+    constructor(color,path,height=1,width=1,scaleFactor=0,rotationFactor=0,short=false,children=[]){
 
         var shapePath = readSVGpath("muralla");
         for(var i=0;i<shapePath.length;i++){
@@ -275,8 +275,15 @@ class Wall extends Object3D{
             }
         }
         var shapeCurve = new CubicBezier2D(shapePath);
+        var sampleRate = 10;
+        var textureSteps = 0.1;
+        if (short) {
+            sampleRate = 5;
+            textureSteps = 0.05;
+
+        }
         shapeCurve.setCenter([shapeCurve.getCenter()[0],-shapePath[0][1]]);
-        super(color,new SweepSurface(shapeCurve,new CubicBezier2D(path),5,10,scaleFactor,rotationFactor,1,width,false, 0.2, 0.2, 0.1), children);
+        super(color,new SweepSurface(shapeCurve,new CubicBezier2D(path),5,sampleRate,scaleFactor,rotationFactor,1,width,false,textureSteps), children);
         this.texture = textures.brick;
     }
 

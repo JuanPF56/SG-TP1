@@ -253,10 +253,17 @@ class CurveSampler {
         var normVectors = [];
         //var biNormVectors = [];
 
+        var curveLength = 0;
+
+        var posVec = null;
+        var prevPosVec = null;
+
+        var lengths = [];
+
         for(var i = 0; i < sections; i++){
             for(var k = 0; k <= pointsPerSection; k++){
 
-                var posVec = this.curve.getPosition(i+k/pointsPerSection);
+                posVec = this.curve.getPosition(i+k/pointsPerSection);
 
                 if(k==0){
                     var tangVec = this.curve.getTangent(i+0.01);
@@ -274,6 +281,17 @@ class CurveSampler {
                 posVectors.push(posVec);
                 tangVectors.push(tangVec);
                 normVectors.push(normVec);
+
+                if(i==0 && k==0){
+                    lengths.push(0);
+                }
+                else {
+                    let lineLength = Math.sqrt((posVec[0]-prevPosVec[0])**2 + (posVec[1]-prevPosVec[1])**2);
+                    curveLength += lineLength;
+                    lengths.push(curveLength);
+                }
+
+                prevPosVec = posVec;
 
                 var bottomLeft = vec2.fromValues(minX,minY);
                 var topRight = vec2.fromValues(maxX,maxY);
@@ -299,7 +317,9 @@ class CurveSampler {
             first,
             last,
             bottomLeft,
-            topRight
+            topRight,
+            lengths,
+            curveLength
             //biNormVectors
         }
 

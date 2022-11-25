@@ -334,7 +334,7 @@
             
                 textures["uvGrid"] = loadTexture("img/uv.jpg",false,false);
 
-                textures["brick"] = loadTexture("img/brick.png",false,true);
+                textures["brick"] = loadTexture("img/brick.png",false,false);
 
                 textures["wood"] = loadTexture("img/wood.png",false,true);
 
@@ -687,10 +687,10 @@
 
                 }
 
-                objects.push(new Wall([0, 102, 102],pathPoints,wallHeight-0.3,0.6,0,0));
+                objects.push(new Wall([0, 102, 102],pathPoints,wallHeight-0.3,0.6,0,0,false));
 
-                murallaP1 = new Wall([0, 102, 102],[[1,points[0][1]],[1,points[0][1]],points[0],points[0]],wallHeight-0.3,0.6,0,0);
-                murallaP2 = new Wall([0, 102, 102],[points[wallSides-1],points[wallSides-1],[-1,points[wallSides-1][1]],[-1,points[wallSides-1][1]]],wallHeight-0.3,0.6,0,0);
+                murallaP1 = new Wall([0, 102, 102],[[1,points[0][1]],[1,points[0][1]],points[0],points[0]],wallHeight-0.3,0.6,0,0,true);
+                murallaP2 = new Wall([0, 102, 102],[points[wallSides-1],points[wallSides-1],[-1,points[wallSides-1][1]],[-1,points[wallSides-1][1]]],wallHeight-0.3,0.6,0,0,true);
 
                 bloqueP1 = new Block([0, 102, 102],0.2,3,wallHeight*4.5,0.01,0);
                 bloqueP1.setTexture(textures.brick);
