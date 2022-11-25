@@ -106,6 +106,27 @@ class Surface {
         return uvBuffer;
 
     }
+    getIndexBuffer(){
+
+        var indexBuffer = [];
+
+        for(var i=0; i < this.rows-1; i++) {
+            if (i % 2 == 0) {
+                for (var j=0; j <= this.cols; j++) {
+                    indexBuffer.push(i*this.cols+j);
+                    indexBuffer.push((i+1)*this.cols+j);
+                }
+            } else {
+                for (var j=this.cols; j >= 0; j--) {
+                    indexBuffer.push(i*this.cols+j);
+                    indexBuffer.push((i+1)*this.cols+j);
+                }
+            }
+        }
+
+        return indexBuffer;
+
+    }
 
     getIndexBuffer(){
 
@@ -138,13 +159,17 @@ class RevolutionSurface extends Surface{
 
     curveSampler;
     vectors;
+    textureStepsW;
+    textureStepsH;
 
-    constructor(curve,sampleRate,cols){
+    constructor(curve,sampleRate,cols,tsW=0.1,tsH=0.1){
         super();
         this.curveSampler = new CurveSampler(curve);
         this.vectors = this.curveSampler.samplePoints(sampleRate);
         this.rows = this.vectors.posVectors.length;
         this.cols = cols;
+        this.textureStepsW=tsW;
+        this.textureStepsH=tsH;
     }
 
     getPositionBuffer(posMat){
@@ -209,13 +234,11 @@ class RevolutionSurface extends Surface{
         for (var i=0; i < this.rows; i++) {
             for (var j=0; j < this.cols; j++) {
 
-                var u = i*0.1;
-                var v = j*0.1;
+                uvBuffer.push(i*this.textureStepsW);
+                uvBuffer.push(j*this.textureStepsH);
 
-                uvBuffer.push(u);
-                uvBuffer.push(v);
+            }   
 
-            }
         }
 
         return uvBuffer;
@@ -263,7 +286,12 @@ class SweepSurface extends Surface{
 
     closed;
 
-    constructor(shapeCurve,pathCurve,shapeSampleRate,pathSampleRate,scaleFactor = 0,rotationFactor = 0,height = 1,width = 1,closed = true){
+    textureStepsW;
+    textureStepsH;
+    textureStepsL;
+
+
+    constructor(shapeCurve,pathCurve,shapeSampleRate,pathSampleRate,scaleFactor = 0,rotationFactor = 0,height = 1,width = 1,closed = true,tsW=0.1,tsH=0.1,tsL=0.1){
         super();
         this.shapeCurve = new CurveSampler(shapeCurve);
         this.pathCurve = new CurveSampler(pathCurve);
@@ -276,6 +304,9 @@ class SweepSurface extends Surface{
         this.scaleFactor = scaleFactor;
         this.rotationFactor = rotationFactor;
         this.closed = closed;
+        this.textureStepsW=tsW;
+        this.textureStepsH=tsH;
+        this.textureStepsL=tsL;
     }
 
     getPositionBuffer(posMat){
@@ -483,19 +514,16 @@ class SweepSurface extends Surface{
                 }
                 for (var j=0; j < this.rows; j++) {
                     var sp = this.shapeVectors.posVectors[j];
-                    uvBuffer.push(0.5+(sp[0]-center[0]));
-                    uvBuffer.push(0.5+(sp[1]+center[1]));
+                    uvBuffer.push(0.5+(sp[0]-center[0])*this.textureStepsW);
+                    uvBuffer.push(0.5+(sp[1]+center[1])*this.textureStepsH);
                 }
             }      
 
 
             for (var j=0; j < this.rows; j++) {
-
-                var u = i*0.1;
-                var v = j*0.1;
                 
-                uvBuffer.push(u);
-                uvBuffer.push(v);
+                uvBuffer.push(i*this.textureStepsW);
+                uvBuffer.push(j*this.textureStepsL);
 
             }
 
@@ -504,8 +532,8 @@ class SweepSurface extends Surface{
             if (i == this.cols - 1 && this.closed){
                 for (var j=0; j < this.rows; j++) {
                     var sp = this.shapeVectors.posVectors[j];
-                    uvBuffer.push(0.5+(sp[0]-center[0]));
-                    uvBuffer.push(0.5+(sp[1]+center[1]));
+                    uvBuffer.push(0.5+(sp[0]-center[0])*this.textureStepsW);
+                    uvBuffer.push(0.5+(sp[1]+center[1])*this.textureStepsH);
                 }
                 for (var j=0; j < this.rows; j++) {
                     uvBuffer.push(0.5);
