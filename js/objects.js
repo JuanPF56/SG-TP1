@@ -71,6 +71,7 @@ class Object3D extends Transformable {
     surface;
     color;
     texture;
+    textureNormal;
 
     positionBuffer = [];
     normalBuffer = [];
@@ -83,10 +84,15 @@ class Object3D extends Transformable {
         this.surface = surface;
         this.color = color;
         this.texture = textures.uvGrid;
+        this.textureNormal = textures.uvGrid;
     }
 
     setTexture(texture){
         this.texture = texture;
+    }
+
+    setTextureNormal(textureNormal){
+        this.textureNormal = textureNormal;
     }
 
     setupBuffers(posMat, normMat) {
@@ -176,7 +182,11 @@ class Object3D extends Transformable {
 
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.texture);
-        gl.uniform1i(glProgram.samplerUniform, 0);
+        gl.uniform1i(glProgram.samplerUniform1, 0);
+
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, this.textureNormal);
+        gl.uniform1i(glProgram.samplerUniform2, 0);
 
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, triangleBuffers.webgl_index_buffer);
         gl.drawElements(gl.TRIANGLE_STRIP, triangleBuffers.webgl_index_buffer.numItems, gl.UNSIGNED_SHORT, 0);
@@ -190,6 +200,7 @@ class Terrain extends Object3D{
     constructor(color,children=[]){
         super(color,new RevolutionSurface(new CubicBezier2D(readSVGpath("terreno")), 8, 8, 10), children);
         this.texture = textures.grass;
+        this.textureNormal = textures.grassN;
     }
 
 }
@@ -199,6 +210,7 @@ class Platform extends Object3D{
     constructor(color,children=[]){
         super(color,new RevolutionSurface(new CubicBezier2D(readSVGpath("plataforma")), 5, 10, 5), children);
         this.texture = textures.grass;
+        this.textureNormal = textures.grassN;
     }
 
 }
@@ -214,6 +226,7 @@ class Tower extends Object3D{
         }
         super(color,new RevolutionSurface(new CubicBezier2D(path), 10, 15, 1), children);
         this.texture = textures.brick;
+        this.textureNormal = textures.brickN;
     }
 
 }
@@ -229,6 +242,7 @@ class TowerC extends Object3D{
         }
         super(color,new RevolutionSurface(new CubicBezier2D(path), 10, 15, 1), children);
         this.texture = textures.marble;
+        this.textureNormal = textures.marbleN;
     }
 
 }
@@ -238,6 +252,7 @@ class Roof extends Object3D{
     constructor(color,children=[]){
         super(color,new RevolutionSurface(new CubicBezier2D(readSVGpath("techoTC")), 5, 10, 2), children);
         this.texture = textures.tiles;
+        this.textureNormal = textures.tilesN;
     }
 
 }
@@ -247,6 +262,7 @@ class Window extends Object3D{
     constructor(color,height=1,width=1,length=5,scaleFactor=0,rotationFactor=0,children=[]){
         super(color,new SweepSurface(new CubicBezier2D(readSVGpath("ventana")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),5,10,scaleFactor,rotationFactor,height,width, 0.4), children);
         this.texture = textures.glass;
+        this.textureNormal = textures.glassN;
     }
 }
 
@@ -285,6 +301,7 @@ class Wall extends Object3D{
         shapeCurve.setCenter([shapeCurve.getCenter()[0],-shapePath[0][1]]);
         super(color,new SweepSurface(shapeCurve,new CubicBezier2D(path),5,sampleRate,scaleFactor,rotationFactor,1,width,false,textureSteps), children);
         this.texture = textures.brick;
+        this.textureNormal = textures.brickN;
     }
 
 }

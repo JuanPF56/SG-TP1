@@ -66,6 +66,7 @@
                 gl_FragColor = vec4(color,1.0);
 
             }
+
         </script>
 
         <script id="shader-fs-colors" type="x-shader/x-fragment">
@@ -82,6 +83,7 @@
                 gl_FragColor = vec4(color,1.0);
 
             }
+
         </script>
 
         <script id="shader-fs-textures" type="x-shader/x-fragment">
@@ -91,11 +93,22 @@
             varying vec3 vPosWorld;
             varying highp vec3 vColor;
             varying highp vec2 vUv;
-            uniform sampler2D uSampler;
+            uniform sampler2D uSampler1;
+            uniform sampler2D uSampler2;
             
             void main(void) {
-               vec4 textureColor = texture2D(uSampler,vUv);
-               gl_FragColor = vec4(textureColor.xyz,1.0);
+
+                vec4 textureColor = texture2D(uSampler1,vUv);
+                vec3 normal = normalize(vNormal+normalize(texture2D(uSampler2,vUv).rgb*2.0-1.0));
+
+                vec3 skyLightColor = vec3(0.66,0.9,0.9);
+                vec3 sunLightColor = vec3(0.8,0.5,0.0);
+
+                vec3 sunLightVec = normalize(vec3(0.0,1.0,20.0)-vPosWorld);
+
+                vec3 finalColor = mix(mix(skyLightColor,textureColor.rgb,0.8),dot(sunLightVec,normal)*sunLightColor*0.6,0.6);
+
+                gl_FragColor = vec4(finalColor.xyz,1.0);
             }
 
         </script>
@@ -335,18 +348,25 @@
                 textures["uvGrid"] = loadTexture("img/uv.jpg",false,false);
 
                 textures["brick"] = loadTexture("img/brick.png",false,false);
+                textures["brickN"] = loadTexture("img/brick_normal.png",false,false);
 
                 textures["wood"] = loadTexture("img/wood.png",false,true);
+                textures["woodN"] = loadTexture("img/wood_normal.png",false,true);
 
                 textures["marble"] = loadTexture("img/marble.png",false,true);
+                textures["marbleN"] = loadTexture("img/marble_normal.png",false,true);
 
                 textures["grass"] = loadTexture("img/grass.png",false,true);
+                textures["grassN"] = loadTexture("img/grass_normal.png",false,true);
 
                 textures["stone"] = loadTexture("img/stone.png",false,true);
+                textures["stoneN"] = loadTexture("img/stone_normal.png",false,true);
 
                 textures["tiles"] = loadTexture("img/tiles.png",false,true);
+                textures["tilesN"] = loadTexture("img/tiles_normal.png",false,true);
 
                 textures["glass"] = loadTexture("img/glass.png",false,true);
+                textures["glassN"] = loadTexture("img/glass_normal.png",false,true);
 
                 textures["water"] = loadTexture("img/water.png",false,true);
 
@@ -359,7 +379,7 @@
 
                 //set the clear color
 
-                gl.clearColor(0.1, 0.1, 0.2, 1.0);     
+                gl.clearColor(0.0, 0.66, 0.9, 1.0);     
                 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);     
     
                 gl.viewport(0, 0, canvas.width, canvas.height);
@@ -400,7 +420,10 @@
                 //use program
                 gl.useProgram(glProgram);
 
-                if(renderType == 0) {glProgram.samplerUniform = gl.getUniformLocation(glProgram, "uSampler");}
+                if(renderType == 0) {
+                    glProgram.samplerUniform1 = gl.getUniformLocation(glProgram, "uSampler1");
+                    glProgram.samplerUniform2 = gl.getUniformLocation(glProgram, "uSampler2");
+                }
 
             }
             
@@ -567,19 +590,23 @@
 
                 bloqueD1 = new Block([255, 204, 102],0.02,0.02,castleLength);
                 bloqueD1.setTexture(textures.marble);
+                bloqueD1.setTextureNormal(textures.marbleN);
                 bloqueD1.translate(0,castleWidth/2,zCoord);
 
                 bloqueD2 = new Block([255, 204, 102],0.02,0.02,castleLength);
                 bloqueD2.setTexture(textures.marble);
+                bloqueD2.setTextureNormal(textures.marbleN);
                 bloqueD2.translate(0,-castleWidth/2,zCoord);
 
                 bloqueD3 = new Block([255, 204, 102],0.02,0.02,castleWidth);
                 bloqueD3.setTexture(textures.marble);
+                bloqueD3.setTextureNormal(textures.marbleN);
                 bloqueD3.rotateZ(Math.PI/2);
                 bloqueD3.translate(0,castleLength/2,zCoord);
 
                 bloqueD4 = new Block([255, 204, 102],0.02,0.02,castleWidth);
                 bloqueD4.setTexture(textures.marble);
+                bloqueD4.setTextureNormal(textures.marbleN);
                 bloqueD4.rotateZ(Math.PI/2);
                 bloqueD4.translate(0,-castleLength/2,zCoord);
 
@@ -626,6 +653,7 @@
 
                 roof = new Block([0, 51, 102],castleLength*0.9,castleWidth*0.9,castleHeight*2,0.5,0);
                 roof.setTexture(textures.tiles);
+                roof.setTextureNormal(textures.tilesN);
                 roof.translate(0,0,castleHeight-castleHeight/3.1);
                 roof.scale(0.2);
                 roof.rotateY(Math.PI/2);
@@ -642,6 +670,7 @@
 
                 bloqueC = new Block([255, 255, 204],castleHeight,castleWidth,castleLength,0,0,children);
                 bloqueC.setTexture(textures.marble);
+                bloqueC.setTextureNormal(textures.marbleN);
 
                 bloqueC.translate(0,0,0.25+castleHeight/2);
 
@@ -694,17 +723,21 @@
 
                 bloqueP1 = new Block([0, 102, 102],0.2,3,wallHeight*4.5,0.01,0);
                 bloqueP1.setTexture(textures.brick);
+                bloqueP1.setTextureNormal(textures.brickN);
                 bloqueP1.translate(1.7,0,1.5);
                 bloqueP1.rotateY(Math.PI/2);
                 bloqueP2 = new Block([0, 102, 102],0.2,3,wallHeight*4.5,0.01,0);
                 bloqueP2.setTexture(textures.brick);
+                bloqueP2.setTextureNormal(textures.brickN);
                 bloqueP2.translate(-1.7,0,1.5);
                 bloqueP2.rotateY(Math.PI/2);
                 bloqueP3 = new Block([0, 102, 102],wallHeight*0.4,3,3.6,0,0);
                 bloqueP3.setTexture(textures.brick);
+                bloqueP3.setTextureNormal(textures.brickN);
                 bloqueP3.translate(0,0,wallHeight*3.4);
                 bloquePuerta = new Block([102, 61, 0],0.2,wallHeight*3,3.2,0,0);
                 bloquePuerta.setTexture(textures.wood);
+                bloquePuerta.setTextureNormal(textures.woodN);
                 bloquePuerta.translate(0,0,1.4);
                 bloquePuerta.translate(0,-1,-1);
                 bloquePuerta.rotateX(gateAngle*Math.PI/180);
@@ -753,11 +786,13 @@
 
                 municion = new Sphere([163, 194, 194]);
                 municion.setTexture(textures.stone);
+                municion.setTextureNormal(textures.stoneN);
                 municion.scale(0.4*loaded);
                 municion.translate(0,0,1.2);
 
                 proyectil = new Sphere([163, 194, 194]);
                 proyectil.setTexture(textures.stone);
+                proyectil.setTextureNormal(textures.stoneN);
                 proyectil.scale(0.4*shot);
 
                 if (shot == 1){
@@ -771,43 +806,52 @@
 
                 cabeza = new Block([102, 68, 0],0.2,1.2,1.2,0,0,[municion]);
                 cabeza.setTexture(textures.wood);
+                cabeza.setTextureNormal(textures.woodN);
                 cabeza.translate(-2.5,0,0.15);
 
                 sostenCP1 = new Block([102, 68, 0],0.03,0.2,0.4,0.01,0);
                 sostenCP1.setTexture(textures.wood);
+                sostenCP1.setTextureNormal(textures.woodN);
                 sostenCP1.translate(0.2,0,-0.1);
                 sostenCP1.rotateY(Math.PI/2);
                 sostenCP2 = new Block([102, 68, 0],0.03,0.2,0.4,0.01,0);
                 sostenCP2.setTexture(textures.wood);
+                sostenCP2.setTextureNormal(textures.woodN);
                 sostenCP2.translate(-0.2,0,-0.1);
                 sostenCP2.rotateY(Math.PI/2);
                 contraPeso = new Block([117, 163, 163],0.4,0.6,0.6,0,0);
                 contraPeso.setTexture(textures.stone);
+                contraPeso.setTextureNormal(textures.stoneN);
                 contraPeso.translate(0,0,-0.5);
 
                 ejeCP = new Cylinder([51, 34, 0],0.08,0.08,0.5,0,0,[sostenCP1,sostenCP2,contraPeso]);
                 ejeCP.setTexture(textures.wood);
+                ejeCP.setTextureNormal(textures.woodN);
                 ejeCP.translate(2.8,0,0);
                 ejeCP.rotateZ(Math.PI/2);
                 ejeCP.rotateX(-Math.PI*((Math.sin(anim))*1/3+1/6));
 
                 pala = new Block([102, 68, 0],0.2,0.2,6,0.03,0, [ejeCP, cabeza]);
                 pala.setTexture(textures.wood);
+                pala.setTextureNormal(textures.woodN);
                 pala.translate(0,1.6,0.2);
                 pala.rotateZ(-Math.PI/2);
 
                 ejeP = new Cylinder([51, 34, 0],0.25,0.25,2,0,0, [pala]);
                 ejeP.setTexture(textures.wood);
+                ejeP.setTextureNormal(textures.woodN);
                 ejeP.translate(0,0,0.7);
                 ejeP.rotateZ(Math.PI/2);
                 ejeP.rotateX(Math.PI*((Math.sin(anim))*1/3+1/6));
                 sosten1 = new Block([102, 68, 0],0.1,0.7,2.4,0.05,0);
                 sosten1.setTexture(textures.wood);
+                sosten1.setTextureNormal(textures.woodN);
                 sosten1.translate(0,0.8,0);
                 sosten1.rotateY(Math.PI/2);
                 sosten1.rotateX(Math.PI/2);
                 sosten2 = new Block([102, 68, 0],0.1,0.7,2.4,0.05,0);
                 sosten2.setTexture(textures.wood);
+                sosten2.setTextureNormal(textures.woodN);
                 sosten2.translate(0,-0.8,0);
                 sosten2.rotateY(Math.PI/2);
                 sosten2.rotateX(Math.PI/2);
@@ -816,28 +860,35 @@
 
                 ruedaD1 = new Cylinder([102, 68, 0],0.4,0.4,0.15,0,0);
                 ruedaD1.setTexture(textures.stone);
+                ruedaD1.setTextureNormal(textures.stoneN);
                 ruedaD1.translate(1.35,0,0);
                 ruedaD2 = new Cylinder([102, 68, 0],0.4,0.4,0.15,0,0);
                 ruedaD2.setTexture(textures.stone);
+                ruedaD2.setTextureNormal(textures.stoneN);
                 ruedaD2.translate(-1.35,0,0);
                 ejeD = new Cylinder([51, 34, 0],0.05,0.05,3,0,0, [ruedaD1,ruedaD2]);
                 ejeD.setTexture(textures.wood);
+                ejeD.setTextureNormal(textures.woodN);
                 ejeD.translate(1.2,0,0);
                 ejeD.rotateZ(Math.PI/2);
 
                 ruedaT1 = new Cylinder([102, 68, 0],0.4,0.4,0.15,0,0);
                 ruedaT1.setTexture(textures.stone);
+                ruedaT1.setTextureNormal(textures.stoneN);
                 ruedaT1.translate(1.35,0,0);
                 ruedaT2 = new Cylinder([102, 68, 0],0.4,0.4,0.15,0,0);
                 ruedaT2.setTexture(textures.stone);
+                ruedaT2.setTextureNormal(textures.stoneN);
                 ruedaT2.translate(-1.35,0,0);
                 ejeT = new Cylinder([51, 34, 0],0.05,0.05,3,0,0, [ruedaT1,ruedaT2]);
                 ejeT.setTexture(textures.wood);
+                ejeT.setTextureNormal(textures.woodN);
                 ejeT.translate(-1.2,0,0);
                 ejeT.rotateZ(Math.PI/2);
 
                 catapulta = new Block([102, 68, 0],0.2,2.5,3.5,0,0,[ejeD,ejeT,sosten]);
                 catapulta.setTexture(textures.wood);
+                catapulta.setTextureNormal(textures.woodN);
                 catapulta.rotateZ(catapultPos*Math.PI/180);
                 catapulta.translate(1.5,1.5,0.03);
                 catapulta.rotateZ(catapultRot*Math.PI/180+Math.PI*1/4);
@@ -854,11 +905,13 @@
 
                 agua = new Plane([102, 217, 255]);
                 agua.setTexture(textures.water);
+                agua.setTextureNormal(textures.waterN);
                 agua.translate(0,0,-0.1);
                 agua.rotateX(-Math.PI/2);
 
                 puente = new Block([92, 214, 92],0.2,2,4,0,0);
                 puente.setTexture(textures.wood);
+                puente.setTextureNormal(textures.woodN);
                 puente.scale(0.15);
                 puente.rotateZ(Math.PI/2);
                 puente.translate(-7.5,0,0.8);
