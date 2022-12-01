@@ -11,7 +11,7 @@ class Surface {
 
     }
 
-    calculateNorm(u,v){
+    calculateTBN(u,v){
 
         var delta=0.05;
         var p1=this.calculatePos(u,v);
@@ -28,7 +28,11 @@ class Surface {
         vec3.cross(n,v1,v2);
         vec3.scale(n,n,-1);
         
-        return n;
+        return {
+            v1,
+            v2,
+            n
+        }
 
     }
 
@@ -58,8 +62,10 @@ class Surface {
 
     }
 
-    getNormalBuffer(normMat){
+    getTBNBuffers(normMat){
 
+        var tangentBuffer = [];
+        var biNormalBuffer = [];
         var normalBuffer = [];
 
         for (var i=0; i <= this.rows; i++) {
@@ -68,21 +74,50 @@ class Surface {
                 var u = j/this.cols;
                 var v = i/this.rows;
 
-                var n = this.calculateNorm(u,v);
+                var tbn = this.calculateTBN(u,v);
+
+                var t = tbn.v1;
+                var b = tbn.v2;
+                var n = tbn.n;
+
+                var tan = vec4.fromValues(t[0],t[1],t[2],1.0);
+                vec4.transformMat4(tan,tan,normMat);
+
+                var bin = vec4.fromValues(b[0],b[1],b[2],1.0);
+                vec4.transformMat4(bin,bin,normMat);
+
                 var nrm = vec4.fromValues(n[0],n[1],n[2],1.0);
                 vec4.transformMat4(nrm,nrm,normMat);
 
-                var normalVec = vec3.fromValues(nrm[0],nrm[1],nrm[2]); 
-                vec3.normalize(normalVec,normalVec);
+                var tanVec = vec3.fromValues(tan[0],tan[1],tan[2]); 
+                vec3.normalize(tanVec,tanVec);
 
-                normalBuffer.push(normalVec[0]);
-                normalBuffer.push(normalVec[1]);
-                normalBuffer.push(normalVec[2]);
+                var binVec = vec3.fromValues(bin[0],bin[1],bin[2]); 
+                vec3.normalize(binVec,binVec);
+
+                var nrmVec = vec3.fromValues(nrm[0],nrm[1],nrm[2]); 
+                vec3.normalize(nrmVec,nrmVec);
+
+                tangentBuffer.push(tanVec[0]);
+                tangentBuffer.push(tanVec[1]);
+                tangentBuffer.push(tanVec[2]);
+
+                biNormalBuffer.push(binVec[0]);
+                biNormalBuffer.push(binVec[1]);
+                biNormalBuffer.push(binVec[2]);
+
+                normalBuffer.push(nrmVec[0]);
+                normalBuffer.push(nrmVec[1]);
+                normalBuffer.push(nrmVec[2]);
 
             }
         }
 
-        return normalBuffer;
+        return {
+            tangentBuffer,
+            biNormalBuffer,
+            normalBuffer
+        }
 
     }
 
@@ -104,27 +139,6 @@ class Surface {
         }
 
         return uvBuffer;
-
-    }
-    getIndexBuffer(){
-
-        var indexBuffer = [];
-
-        for(var i=0; i < this.rows-1; i++) {
-            if (i % 2 == 0) {
-                for (var j=0; j <= this.cols; j++) {
-                    indexBuffer.push(i*this.cols+j);
-                    indexBuffer.push((i+1)*this.cols+j);
-                }
-            } else {
-                for (var j=this.cols; j >= 0; j--) {
-                    indexBuffer.push(i*this.cols+j);
-                    indexBuffer.push((i+1)*this.cols+j);
-                }
-            }
-        }
-
-        return indexBuffer;
 
     }
 
@@ -198,31 +212,59 @@ class RevolutionSurface extends Surface{
 
     }
 
-    getNormalBuffer(normMat){
+    getTBNBuffers(normMat){
 
+        var tangentBuffer = [];
+        var biNormalBuffer = [];
         var normalBuffer = [];
 
         for (var i=0; i < this.rows; i++) {
             for (var j=0; j <= this.cols; j++) {
 
+                var t = this.vectors.tangVectors[i];
                 var n = this.vectors.normVectors[i];
+
                 var nrm = vec4.fromValues(n[0],0.0,n[1],1.0);
+                var tan = vec4.fromValues(-t[0],0.0,-t[1],1.0);
+
                 var m = mat4.create();
                 mat4.rotateZ(m,m,(j*2*Math.PI/this.cols));
                 mat4.mul(m,normMat,m);
+
+                vec4.transformMat4(tan,tan,m);
                 vec4.transformMat4(nrm,nrm,m);
 
-                var normalVec = vec3.fromValues(nrm[0],nrm[1],nrm[2]); 
-                vec3.normalize(normalVec,normalVec);
+                var tanVec = vec3.fromValues(tan[0],tan[1],tan[2]);
+                vec3.normalize(tanVec,tanVec);
 
-                normalBuffer.push(normalVec[0]);
-                normalBuffer.push(normalVec[1]);
-                normalBuffer.push(normalVec[2]);
+                var nrmVec = vec3.fromValues(nrm[0],nrm[1],nrm[2]);
+                vec3.normalize(nrmVec,nrmVec);
+
+                var binVec = vec3.create();
+                vec3.cross(binVec,nrmVec,tanVec);
+                vec3.normalize(binVec,binVec);
+
+                tangentBuffer.push(tanVec[0]);
+                tangentBuffer.push(tanVec[1]);
+                tangentBuffer.push(tanVec[2]);
+
+                biNormalBuffer.push(binVec[0]);
+                biNormalBuffer.push(binVec[1]);
+                biNormalBuffer.push(binVec[2]);
+
+                normalBuffer.push(nrmVec[0]);
+                normalBuffer.push(nrmVec[1]);
+                normalBuffer.push(nrmVec[2]);
 
             }
         }
 
-        return normalBuffer;
+        return {
+            tangentBuffer,
+            biNormalBuffer,
+            normalBuffer
+        }
+
 
     }
 
@@ -395,8 +437,10 @@ class SweepSurface extends Surface{
 
     }
 
-    getNormalBuffer(normMat){
+    getTBNBuffers(normMat){
 
+        var tangentBuffer = [];
+        var biNormalBuffer = [];
         var normalBuffer = [];
 
         for (var i=0; i < this.cols; i++) {
@@ -409,7 +453,10 @@ class SweepSurface extends Surface{
             var ppBiNorm = vec3.create();
             vec3.cross(ppBiNorm,vec3.fromValues(ppTan[0],ppTan[1],0),vec3.fromValues(ppNorm[0],ppNorm[1],0));
 
+            var tan;
+            var bin;
             var nrm;
+
             // matriz de nivel:
             var levelDeformation = mat4.create();
             mat4.rotateZ(levelDeformation,levelDeformation,(i/(this.cols-1))*2*Math.PI*this.rotationFactor);
@@ -421,74 +468,107 @@ class SweepSurface extends Surface{
             mat4.mul(m,normMat,m);
 
             if(i == 0 && this.closed){
-                for (var j=0; j < this.rows; j++) {
+                for (var j=0; j < (this.rows*2); j++) {
+
+                    tan = vec4.fromValues(0,-1,0,1);
+                    vec4.transformMat4(tan,tan,m);
                     nrm = vec4.fromValues(0,0,-1,1);
                     vec4.transformMat4(nrm,nrm,m);
 
-                    var normalVec = vec3.fromValues(nrm[0],nrm[1],nrm[2]); 
-                    vec3.normalize(normalVec,normalVec);
+                    var tanVec = vec3.fromValues(tan[0],tan[1],tan[2]); 
+                    vec3.normalize(tanVec,tanVec);
+                    var nrmVec = vec3.fromValues(nrm[0],nrm[1],nrm[2]); 
+                    vec3.normalize(nrmVec,nrmVec);
 
-                    normalBuffer.push(normalVec[0]);
-                    normalBuffer.push(normalVec[1]);
-                    normalBuffer.push(normalVec[2]);
-                }
-                for (var j=0; j < this.rows; j++) {
-                    nrm = vec4.fromValues(0,0,-1,1);
-                    vec4.transformMat4(nrm,nrm,m);
+                    var binVec = vec3.create();
+                    vec3.cross(binVec,nrmVec,tanVec);
+                    vec3.normalize(binVec,binVec);
 
-                    var normalVec = vec3.fromValues(nrm[0],nrm[1],nrm[2]); 
-                    vec3.normalize(normalVec,normalVec);
+                    tangentBuffer.push(tanVec[0]);
+                    tangentBuffer.push(tanVec[1]);
+                    tangentBuffer.push(tanVec[2]);
 
-                    normalBuffer.push(normalVec[0]);
-                    normalBuffer.push(normalVec[1]);
-                    normalBuffer.push(normalVec[2]);
+                    biNormalBuffer.push(binVec[0]);
+                    biNormalBuffer.push(binVec[1]);
+                    biNormalBuffer.push(binVec[2]);
+
+                    normalBuffer.push(nrmVec[0]);
+                    normalBuffer.push(nrmVec[1]);
+                    normalBuffer.push(nrmVec[2]);
+
                 }
             }
 
             for (var j=0; j < this.rows; j++) {
 
+                var t = this.shapeVectors.tangVectors[j];
                 var n = this.shapeVectors.normVectors[j];
-                var nrm = vec4.fromValues(n[0],n[1],0.0,1.0);
-                
+
+                tan = vec4.fromValues(t[0],t[1],0,1);
+                vec4.transformMat4(tan,tan,m);
+                nrm = vec4.fromValues(n[0],n[1],0,1);
                 vec4.transformMat4(nrm,nrm,m);
 
-                var normalVec = vec3.fromValues(nrm[0],nrm[1],nrm[2]); 
-                vec3.normalize(normalVec,normalVec);
+                var tanVec = vec3.fromValues(tan[0],tan[1],tan[2]); 
+                vec3.normalize(tanVec,tanVec);
+                var nrmVec = vec3.fromValues(nrm[0],nrm[1],nrm[2]); 
+                vec3.normalize(nrmVec,nrmVec);
+                var binVec = vec3.create();
+                vec3.cross(binVec,tanVec,nrmVec);
+                vec3.normalize(binVec,binVec);
 
-                normalBuffer.push(normalVec[0]);
-                normalBuffer.push(normalVec[1]);
-                normalBuffer.push(normalVec[2]);
+                tangentBuffer.push(tanVec[0]);
+                tangentBuffer.push(tanVec[1]);
+                tangentBuffer.push(tanVec[2]);
+
+                biNormalBuffer.push(binVec[0]);
+                biNormalBuffer.push(binVec[1]);
+                biNormalBuffer.push(binVec[2]);
+
+                normalBuffer.push(nrmVec[0]);
+                normalBuffer.push(nrmVec[1]);
+                normalBuffer.push(nrmVec[2]);
 
             }
 
             if( i == this.cols - 1 && this.closed){
-                for (var j=0; j < this.rows; j++) {
+                for (var j=0; j < (this.rows*2); j++) {
+
+                    tan = vec4.fromValues(0,1,0,1);
+                    vec4.transformMat4(tan,tan,m);
                     nrm = vec4.fromValues(0,0,1,1);
                     vec4.transformMat4(nrm,nrm,m);
 
-                    var normalVec = vec3.fromValues(nrm[0],nrm[1],nrm[2]); 
-                    vec3.normalize(normalVec,normalVec);
+                    var tanVec = vec3.fromValues(tan[0],tan[1],tan[2]); 
+                    vec3.normalize(tanVec,tanVec);
+                    var nrmVec = vec3.fromValues(nrm[0],nrm[1],nrm[2]); 
+                    vec3.normalize(nrmVec,nrmVec);
 
-                    normalBuffer.push(normalVec[0]);
-                    normalBuffer.push(normalVec[1]);
-                    normalBuffer.push(normalVec[2]);
+                    var binVec = vec3.create();
+                    vec3.cross(binVec,nrmVec,tanVec);
+                    vec3.normalize(binVec,binVec);
+
+                    tangentBuffer.push(tanVec[0]);
+                    tangentBuffer.push(tanVec[1]);
+                    tangentBuffer.push(tanVec[2]);
+
+                    biNormalBuffer.push(binVec[0]);
+                    biNormalBuffer.push(binVec[1]);
+                    biNormalBuffer.push(binVec[2]);
+
+                    normalBuffer.push(nrmVec[0]);
+                    normalBuffer.push(nrmVec[1]);
+                    normalBuffer.push(nrmVec[2]);
+
                 }
-                for (var j=0; j < this.rows; j++) {
-                    nrm = vec4.fromValues(0,0,1,1);
-                    vec4.transformMat4(nrm,nrm,m);
-
-                    var normalVec = vec3.fromValues(nrm[0],nrm[1],nrm[2]); 
-                    vec3.normalize(normalVec,normalVec);
-
-                    normalBuffer.push(normalVec[0]);
-                    normalBuffer.push(normalVec[1]);
-                    normalBuffer.push(normalVec[2]);
-                }
-
             }
         }
 
-        return normalBuffer;
+        return {
+            tangentBuffer,
+            biNormalBuffer,
+            normalBuffer
+        }
 
     }
 
@@ -517,8 +597,8 @@ class SweepSurface extends Surface{
                 }
                 for (var j=0; j < this.rows; j++) {
                     var sp = this.shapeVectors.posVectors[j];
-                    uvBuffer.push(0.5+this.textureSteps*(sp[0]-center[0]));
-                    uvBuffer.push(0.5+this.textureSteps*(sp[1]+center[1]));
+                    uvBuffer.push(0.5+this.textureSteps*2*(sp[0]-center[0]));
+                    uvBuffer.push(0.5+this.textureSteps*2*(sp[1]+center[1]));
                 }
             }      
 
@@ -534,8 +614,8 @@ class SweepSurface extends Surface{
             if (i == this.cols - 1 && this.closed){
                 for (var j=0; j < this.rows; j++) {
                     var sp = this.shapeVectors.posVectors[j];
-                    uvBuffer.push(0.5+this.textureSteps*(sp[0]-center[0]));
-                    uvBuffer.push(0.5+this.textureSteps*(sp[1]+center[1]));
+                    uvBuffer.push(0.5+this.textureSteps*2*(sp[0]-center[0]));
+                    uvBuffer.push(0.5+this.textureSteps*2*(sp[1]+center[1]));
                 }
                 for (var j=0; j < this.rows; j++) {
                     uvBuffer.push(0.5);
