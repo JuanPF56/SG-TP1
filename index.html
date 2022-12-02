@@ -34,8 +34,11 @@
             uniform mat4 modelMatrix;            
             uniform mat4 viewMatrix;
             uniform mat4 projMatrix;
-
             uniform mat4 normalMatrix;
+
+            uniform vec3 uDirLightPosition;
+
+            varying highp vec3 vLightDir;
 
             varying vec3 vTangent;   
             varying vec3 vBiNormal;    
@@ -52,6 +55,10 @@
                 vTangent=(normalMatrix*vec4(aVertexTangent,1.0)).xyz; 
                 vBiNormal=(normalMatrix*vec4(aVertexBiNormal,1.0)).xyz; 
                 vNormal=(normalMatrix*vec4(aVertexNormal,1.0)).xyz; 
+                vec3 vDirLightPosition=(modelMatrix*vec4(uDirLightPosition,1.0)).xyz;
+
+                vLightDir = normalize(vDirLightPosition - vPosWorld);
+
                 vColor = aVertexColor;
                 vUv = aVertexUv;
                 
@@ -94,14 +101,33 @@
 
         <script id="shader-fs-textures" type="x-shader/x-fragment">
 
-            precision highp float;
+            precision highp float;         
+            uniform mat4 viewMatrix;
+
+            #define MAX_LIGHTS 3
+
+            uniform vec4 uLightPos[MAX_LIGHTS];
+
             varying vec3 vTangent;
+            varying vec3 vBiNormal;
             varying vec3 vNormal;
             varying vec3 vPosWorld;
-            varying highp vec3 vColor;
             varying highp vec2 vUv;
+
             uniform sampler2D uSampler1;
             uniform sampler2D uSampler2;
+
+            uniform vec3 uAmbientColor;
+            uniform vec3 uDirLightColor;
+            uniform vec3 uLightSourceColor;
+
+            uniform float uAmbFactor;
+            uniform float uDifFactor;
+
+            uniform bool uIsSpecular;
+            uniform bool uIsLightSource;
+
+            varying highp vec3 vLightDir;
 
             mat3 transpose(mat3 m) {
 
@@ -126,21 +152,60 @@
                     
             void main(void) {
 
-                vec3 biNormal = normalize(cross(vNormal,vTangent));
-                mat3 TBN = transpose(mat3(vTangent, biNormal, vNormal));
+                vec3 finalColor;
 
-                vec4 textureColor = texture2D(uSampler1,vUv);
+                if(uIsLightSource){
 
-                vec3 n = normalize(texture2D(uSampler2,vUv).rgb*2.0-1.0);
+                    finalColor = vec3(1.0,1.0,1.0);
 
-                vec3 skyLightColor = vec3(0.66,0.9,0.9);
+                } else {
 
-                vec3 sunLightColor = vec3(0.8,0.5,0.0);
-                vec3 sunLightVec = normalize(TBN*(vec3(0.0,5.0,5.0)-vPosWorld));
+                    mat3 TBN = transpose(mat3(vTangent, vBiNormal, vNormal));
 
-                vec3 lightColor = skyLightColor + sunLightColor * max(dot(n,sunLightVec),0.0);
+                    vec4 textureColor = texture2D(uSampler1,vUv);
 
-                vec3 finalColor = lightColor * textureColor.xyz;
+                    vec3 dirLightVec = normalize(TBN*vLightDir);
+
+                    vec3 n = normalize(texture2D(uSampler2,vUv).rgb*2.0-1.0);
+
+                    vec3 lightColor = uAmbientColor * uAmbFactor + uDirLightColor * uDifFactor * max(dot(n,dirLightVec), 0.0);
+
+                    if(uIsSpecular){
+
+                        vec3 vCameraPos = (vec4(1.0,1.0,1.0,1.0)*viewMatrix).xyz;
+                        vec3 cameraPos = normalize(TBN*(vCameraPos-vPosWorld));
+
+                        vec3 r = -normalize(reflect(dirLightVec,n));
+
+                        lightColor += uDirLightColor * pow(max(dot(r,cameraPos),0.0),20.0);
+                    }
+
+                    for(int i = 0; i < MAX_LIGHTS; i++){
+
+                        vec3 lightPos = uLightPos[i].xyz;
+
+                        vec3 lightVec = normalize(TBN*(lightPos-vPosWorld));
+
+                        float dist = sqrt(dot(lightPos-vPosWorld, lightPos-vPosWorld));
+
+                        lightColor += uLightSourceColor/255.0 * uAmbFactor / pow(dist,2.0) + uLightSourceColor/255.0 * uDifFactor * max(dot(n,lightVec), 0.0) / pow(dist,2.0);
+
+                        if(uIsSpecular){
+
+                            vec3 vCameraPos = (vec4(1.0,1.0,1.0,1.0)*viewMatrix).xyz;
+                            vec3 cameraPos = normalize(TBN*(vCameraPos-vPosWorld));
+
+                            vec3 r = -normalize(reflect(lightVec,n));
+
+                            lightColor += uLightSourceColor/255.0 * pow(max(dot(r,cameraPos),0.0),20.0) / pow(dist,2.0);
+
+                        }
+
+                    }
+
+                    finalColor = lightColor * textureColor.xyz;
+
+                }
 
                 gl_FragColor = vec4(finalColor.xyz,1.0);
             }
@@ -198,6 +263,8 @@
             var projMatrix = mat4.create();
             var normalMatrix = mat4.create();
 
+            var dirLightPosition;
+
             var textures = [];
 
             var previousClientX = 0;
@@ -227,9 +294,22 @@
                 rotacionCatapulta: 180,
                 ubicacionCatapulta: 0,
                 camara: 1,
-                renderizado: 0
+                renderizado: 0,
+                colorAmbiente: [0,100,255],
+                colorSol: [255,180,0],
+                colorLuces: [255,255,0]
 
             }
+
+            var ambientColor;
+            var sunColor;
+            var fireballColor;
+
+            var ambFactor;
+            var difFactor;
+
+            var isSpecular;
+            var isLightSource;
 
             var camera = 1;
             var renderType = 0;
@@ -406,6 +486,9 @@
                 textures["glass"] = loadTexture("img/glass.png",false,true);
                 textures["glassN"] = loadTexture("img/glass_normal.png",false,true);
 
+                textures["fireball"] = loadTexture("img/fireball.png",false,true);
+                textures["fireballN"] = loadTexture("img/fireball_normal.png",false,true);
+
                 textures["water"] = loadTexture("img/water.png",false,true);
 
             }
@@ -459,8 +542,27 @@
                 gl.useProgram(glProgram);
 
                 if(renderType == 0) {
+
                     glProgram.samplerUniform1 = gl.getUniformLocation(glProgram, "uSampler1");
                     glProgram.samplerUniform2 = gl.getUniformLocation(glProgram, "uSampler2");
+
+                    dirLightPosition = gl.getUniformLocation(glProgram,"uDirLightPosition");
+                    gl.uniform1fv(dirLightPosition, vec3.fromValues(0.0,5.0,10.0));
+
+                    ambFactor = gl.getUniformLocation(glProgram,"uAmbFactor");
+                    difFactor = gl.getUniformLocation(glProgram,"uDifFactor");
+
+                    isLightSource = gl.getUniformLocation(glProgram,"uIsLightSource");
+                    isSpecular = gl.getUniformLocation(glProgram,"uIsSpecular");
+
+                    ambientColor = gl.getUniformLocation(glProgram,"uAmbientColor");
+                    gl.uniform3fv(ambientColor,vec3.fromValues(0.0,0.39,1.0));
+
+                    sunColor = gl.getUniformLocation(glProgram,"uDirLightColor");
+                    gl.uniform3fv(sunColor,vec3.fromValues(1.0,0.7,0.0));
+
+                    fireballColor = gl.getUniformLocation(glProgram,"uLightSourceColor");
+                    gl.uniform3fv(fireballColor,vec3.fromValues(1.0,1.0,0.0));
                 }
 
             }
@@ -555,6 +657,45 @@
                 gui.add(options, "renderizado", { "Texturas": '0', "Colores": '1', "Normales": '2'}).onChange((val) => {
                     renderType = val;
                     initShaders();
+                });
+
+                const lightingSettings = gui.addFolder("Iluminacion");
+                lightingSettings.open();
+
+                lightingSettings.addColor(options, "colorAmbiente").onChange(() => {
+                
+                    var r = options.colorAmbiente[0]/255;
+                    var g = options.colorAmbiente[1]/255;
+                    var b = options.colorAmbiente[2]/255;
+
+                    var color = vec3.fromValues(r,g,b);
+
+                    gl.uniform3fv(ambientColor, color);
+
+                });
+
+                lightingSettings.addColor(options, "colorSol").onChange((val) => {
+
+                    var r = options.colorSol[0]/255;
+                    var g = options.colorSol[1]/255;
+                    var b = options.colorSol[2]/255;
+
+                    var color = vec3.fromValues(r,g,b);
+
+                    gl.uniform3fv(sunColor, color);
+
+                });
+
+                lightingSettings.addColor(options, "colorLuces").onChange((val) => {
+
+                    var r = options.colorLuces[0]/255;
+                    var g = options.colorLuces[1]/255;
+                    var b = options.colorLuces[2]/255;
+
+                    var color = vec3.fromValues(r,g,b);
+
+                    gl.uniform3fv(fireballColor, color);
+
                 });
 
 
@@ -756,15 +897,41 @@
 
                 objects.push(new Wall([0, 102, 102],pathPoints,wallHeight-0.3,0.6,0,0,false));
 
+                fuego1 = new Sphere([255, 255, 200]);
+                fuego1.setTexture(textures.fireball);
+                fuego1.setTextureNormal(textures.fireballN);
+                fuego1.translate(1,0,0);
+                fuego1.scale(0.5);
+                antorcha1 = new Cylinder([51, 34, 0],0.25,0.25,2,0,0,[fuego1]);
+                antorcha1.setTexture(textures.wood);
+                antorcha1.setTextureNormal(textures.woodN);
+                antorcha1.translate(-wallHeight+0.2,1.2,0.75);
+                antorcha1.rotateZ(-Math.PI*5/4);
+                antorcha1.scale(0.2);
+
+                fuego2 = new Sphere([255, 255, 200]);
+                fuego2.setTexture(textures.fireball);
+                fuego2.setTextureNormal(textures.fireballN);
+                fuego2.translate(1,0,0);
+                fuego2.scale(0.5);
+                antorcha2 = new Cylinder([51, 34, 0],0.25,0.25,2,0,0,[fuego2]);
+                antorcha2.setTexture(textures.wood);
+                antorcha2.setTextureNormal(textures.woodN);
+                antorcha2.translate(-wallHeight+0.2,1.2,-0.75);
+                antorcha2.rotateZ(-Math.PI*5/4);
+                antorcha2.scale(0.2);
+
+
                 murallaP1 = new Wall([0, 102, 102],[[1,points[0][1]],[1,points[0][1]],points[0],points[0]],wallHeight-0.3,0.6,0,0,true);
                 murallaP2 = new Wall([0, 102, 102],[points[wallSides-1],points[wallSides-1],[-1,points[wallSides-1][1]],[-1,points[wallSides-1][1]]],wallHeight-0.3,0.6,0,0,true);
 
-                bloqueP1 = new Block([0, 102, 102],0.2,3,wallHeight*4.5,0.01,0);
+
+                bloqueP1 = new Block([0, 102, 102],0.2,3,wallHeight*4.5,0.01,0,[antorcha1]);
                 bloqueP1.setTexture(textures.brick);
                 bloqueP1.setTextureNormal(textures.brickN);
                 bloqueP1.translate(1.7,0,1.5);
                 bloqueP1.rotateY(Math.PI/2);
-                bloqueP2 = new Block([0, 102, 102],0.2,3,wallHeight*4.5,0.01,0);
+                bloqueP2 = new Block([0, 102, 102],0.2,3,wallHeight*4.5,0.01,0,[antorcha2]);
                 bloqueP2.setTexture(textures.brick);
                 bloqueP2.setTextureNormal(textures.brickN);
                 bloqueP2.translate(-1.7,0,1.5);
@@ -811,10 +978,14 @@
 
                 var m = mat4.create();
 
-                mat4.translate(m,m,[endVec[0]+speed[0]*s,endVec[1]+speed[1]*s,endVec[2]+speed[2]*s-(1/2)*0.98*(s**2)]);
+                var position = vec3.fromValues(endVec[0]+speed[0]*s,endVec[1]+speed[1]*s,endVec[2]+speed[2]*s-(1/2)*0.98*(s**2));
+
+                mat4.translate(m,m,position);
                 mat4.scale(m,m,[0.02,0.02,0.02]);
 
                 projectile.setPosMatrix(m);
+
+                gl.uniform4fv(gl.getUniformLocation(glProgram,"uLightPos[0]"),vec4.fromValues(position[0],position[1],position[2],1.0));
 
                 s += 0.25;
 
@@ -822,15 +993,15 @@
 
             function drawCatapult(){
 
-                municion = new Sphere([163, 194, 194]);
-                municion.setTexture(textures.stone);
-                municion.setTextureNormal(textures.stoneN);
+                municion = new Sphere([255, 255, 200]);
+                municion.setTexture(textures.fireball);
+                municion.setTextureNormal(textures.fireballN);
                 municion.scale(0.4*loaded);
                 municion.translate(0,0,1.2);
 
-                proyectil = new Sphere([163, 194, 194]);
-                proyectil.setTexture(textures.stone);
-                proyectil.setTextureNormal(textures.stoneN);
+                proyectil = new Sphere([255, 255, 200]);
+                proyectil.setTexture(textures.fireball);
+                proyectil.setTextureNormal(textures.fireballN);
                 proyectil.scale(0.4*shot);
 
                 if (shot == 1){
@@ -840,6 +1011,7 @@
                 if(s == 5){
                     shot = 0;
                     s = 0;
+                    gl.uniform4fv(gl.getUniformLocation(glProgram,"uLightPos[0]"),vec4.fromValues(100.0,100.0,100.0,1.0));
                 }
 
                 cabeza = new Block([102, 68, 0],0.2,1.2,1.2,0,0,[municion]);
@@ -984,6 +1156,21 @@
                 } else{
                     t = 0;
                 }
+
+                if(loaded==1){
+                    position = vec4.create();
+                    mat4.getTranslation(position,municion.getCompletePosMatrix());
+                    gl.uniform4fv(gl.getUniformLocation(glProgram,"uLightPos[0]"),position);
+                }
+
+                position = vec4.create();
+                mat4.getTranslation(position,fuego1.getCompletePosMatrix());
+                gl.uniform4fv(gl.getUniformLocation(glProgram,"uLightPos[1]"),position);
+
+
+                position = vec4.create();
+                mat4.getTranslation(position,fuego2.getCompletePosMatrix());
+                gl.uniform4fv(gl.getUniformLocation(glProgram,"uLightPos[2]"),position);
 
                 anim += t;
 

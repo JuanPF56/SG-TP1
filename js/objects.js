@@ -73,6 +73,12 @@ class Object3D extends Transformable {
     texture;
     textureNormal;
 
+    ambFactor;
+    difFactor;
+
+    specular;
+    lightSource;
+
     positionBuffer = [];
     normalBuffer = [];
     tangentBuffer = [];
@@ -82,11 +88,20 @@ class Object3D extends Transformable {
     indexBuffer = [];
 
     constructor(color,surface,children=[]){
+
         super(children);
+
         this.surface = surface;
         this.color = color;
         this.texture = textures.uvGrid;
         this.textureNormal = textures.uvGrid;
+
+        this.ambFactor = 1.0;
+        this.difFactor = 1.0;
+
+        this.lightSource = false;
+        this.specular = false;
+
     }
 
     setTexture(texture){
@@ -219,9 +234,15 @@ class Object3D extends Transformable {
         gl.bindTexture(gl.TEXTURE_2D, this.textureNormal);
         gl.uniform1i(glProgram.samplerUniform2, 0);
 
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, triangleBuffers.webgl_index_buffer);
-        gl.drawElements(gl.TRIANGLE_STRIP, triangleBuffers.webgl_index_buffer.numItems, gl.UNSIGNED_SHORT, 0);
+        gl.uniform1f(ambFactor, this.ambFactor);
+        gl.uniform1f(difFactor, this.difFactor);
 
+        gl.uniform1f(isLightSource, this.lightSource);
+        gl.uniform1f(isSpecular, this.specular);
+
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, triangleBuffers.webgl_index_buffer);
+
+        gl.drawElements(gl.TRIANGLE_STRIP, triangleBuffers.webgl_index_buffer.numItems, gl.UNSIGNED_SHORT, 0);
     }
 
 }
@@ -294,6 +315,9 @@ class Window extends Object3D{
         super(color,new SweepSurface(new CubicBezier2D(readSVGpath("ventana")),new CubicBezier2D([[-length/2,0],[-length/4,0],[length/4,0],[length/2,0]]),5,10,scaleFactor,rotationFactor,height,width, 0.4), children);
         this.texture = textures.glass;
         this.textureNormal = textures.glassN;
+        this.ambFactor = 0.3;
+        this.difFactor = 0.5;
+        this.specular = true;
     }
 }
 
@@ -340,11 +364,14 @@ class Wall extends Object3D{
 class Plane extends Object3D{
     constructor(color,children=[]){
         super(color,new Surface(), children);
+        this.difFactor = 0.5;
+        this.specular = true;
     }
 }
 
 class Sphere extends Object3D{
     constructor(color,children=[]){
         super(color,new SphereSurf(), children);
+        this.lightSource = true;
     }
 }

@@ -241,7 +241,7 @@ class RevolutionSurface extends Surface{
                 vec3.normalize(nrmVec,nrmVec);
 
                 var binVec = vec3.create();
-                vec3.cross(binVec,nrmVec,tanVec);
+                vec3.cross(binVec,tanVec,nrmVec);
                 vec3.normalize(binVec,binVec);
 
                 tangentBuffer.push(tanVec[0]);
@@ -470,7 +470,7 @@ class SweepSurface extends Surface{
             if(i == 0 && this.closed){
                 for (var j=0; j < (this.rows*2); j++) {
 
-                    tan = vec4.fromValues(0,-1,0,1);
+                    tan = vec4.fromValues(0,1,0,1);
                     vec4.transformMat4(tan,tan,m);
                     nrm = vec4.fromValues(0,0,-1,1);
                     vec4.transformMat4(nrm,nrm,m);
