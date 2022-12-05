@@ -250,9 +250,97 @@ class Object3D extends Transformable {
 class Terrain extends Object3D{
 
     constructor(color,children=[]){
-        super(color,new RevolutionSurface(new CubicBezier2D(readSVGpath("terreno")), 8, 8, 15), children);
+        super(color,new RevolutionSurface(new CubicBezier2D(readSVGpath("terreno")), 8, 8, 8), children);
         this.texture = textures.grass;
         this.textureNormal = textures.grassN;
+    }
+
+    terrainUVBuffer(scale, offset){
+
+        var terrainUVBuffer = [];
+
+        for(var i = 0; i < this.positionBuffer.length; i += 3){
+
+            terrainUVBuffer.push(this.positionBuffer[i]*scale+offset);
+            terrainUVBuffer.push(this.positionBuffer[i+1]*scale+offset);
+
+        }
+
+        return terrainUVBuffer;
+
+    }
+
+    setupBuffers(posMat, normMat) {
+
+        var buffersTBN = this.surface.getTBNBuffers(normMat);
+
+        this.positionBuffer = this.surface.getPositionBuffer(posMat);
+        this.normalBuffer = buffersTBN.normalBuffer;
+        this.tangentBuffer = buffersTBN.tangentBuffer;
+        this.biNormalBuffer = buffersTBN.biNormalBuffer;
+
+        this.uvBuffer = this.terrainUVBuffer(2,0);
+
+        for(var i=0; i<this.positionBuffer.length; i += 3){
+            this.colorBuffer.push(this.color[0]/255);
+            this.colorBuffer.push(this.color[1]/255);
+            this.colorBuffer.push(this.color[2]/255);
+        }
+        
+        this.indexBuffer = this.surface.getIndexBuffer();
+        
+        let webgl_position_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, webgl_position_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.positionBuffer), gl.STATIC_DRAW);
+        webgl_position_buffer.itemSize = 3;
+        webgl_position_buffer.numItems = this.positionBuffer.length / 3;
+
+        let webgl_normal_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, webgl_normal_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.normalBuffer), gl.STATIC_DRAW);
+        webgl_normal_buffer.itemSize = 3;
+        webgl_normal_buffer.numItems = this.normalBuffer.length / 3;
+
+        let webgl_tangent_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, webgl_tangent_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.tangentBuffer), gl.STATIC_DRAW);
+        webgl_tangent_buffer.itemSize = 3;
+        webgl_tangent_buffer.numItems = this.tangentBuffer.length / 3;
+
+        let webgl_binormal_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, webgl_binormal_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.biNormalBuffer), gl.STATIC_DRAW);
+        webgl_binormal_buffer.itemSize = 3;
+        webgl_binormal_buffer.numItems = this.biNormalBuffer.length / 3;
+
+        let webgl_color_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, webgl_color_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.colorBuffer), gl.STATIC_DRAW);
+        webgl_color_buffer.itemSize = 3;
+        webgl_color_buffer.numItems = this.colorBuffer.length / 3; 
+
+        let webgl_uv_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, webgl_uv_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.uvBuffer), gl.STATIC_DRAW);    
+        webgl_uv_buffer.itemSize = 2;
+        webgl_uv_buffer.numItems = this.uvBuffer.length / 2; 
+
+        let webgl_index_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, webgl_index_buffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.indexBuffer), gl.STATIC_DRAW);
+        webgl_index_buffer.itemSize = 1;
+        webgl_index_buffer.numItems = this.indexBuffer.length;
+
+        return {
+            webgl_position_buffer,
+            webgl_normal_buffer,
+            webgl_tangent_buffer,
+            webgl_binormal_buffer,
+            webgl_color_buffer,
+            webgl_uv_buffer,
+            webgl_index_buffer
+        }
+
     }
 
 }
@@ -260,9 +348,97 @@ class Terrain extends Object3D{
 class Platform extends Object3D{
 
     constructor(color,children=[]){
-        super(color,new RevolutionSurface(new CubicBezier2D(readSVGpath("plataforma")), 5, 10, 8), children);
+        super(color,new RevolutionSurface(new CubicBezier2D(readSVGpath("plataforma")), 5, 10, 4), children);
         this.texture = textures.grass;
         this.textureNormal = textures.grassN;
+    }
+
+    terrainUVBuffer(scale, offset){
+
+        var terrainUVBuffer = [];
+
+        for(var i = 0; i < this.positionBuffer.length; i += 3){
+
+            terrainUVBuffer.push(this.positionBuffer[i]*scale+offset);
+            terrainUVBuffer.push(this.positionBuffer[i+1]*scale+offset);
+
+        }
+
+        return terrainUVBuffer;
+
+    }
+
+    setupBuffers(posMat, normMat) {
+
+        var buffersTBN = this.surface.getTBNBuffers(normMat);
+
+        this.positionBuffer = this.surface.getPositionBuffer(posMat);
+        this.normalBuffer = buffersTBN.normalBuffer;
+        this.tangentBuffer = buffersTBN.tangentBuffer;
+        this.biNormalBuffer = buffersTBN.biNormalBuffer;
+
+        this.uvBuffer = this.terrainUVBuffer(2,0);
+
+        for(var i=0; i<this.positionBuffer.length; i += 3){
+            this.colorBuffer.push(this.color[0]/255);
+            this.colorBuffer.push(this.color[1]/255);
+            this.colorBuffer.push(this.color[2]/255);
+        }
+        
+        this.indexBuffer = this.surface.getIndexBuffer();
+        
+        let webgl_position_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, webgl_position_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.positionBuffer), gl.STATIC_DRAW);
+        webgl_position_buffer.itemSize = 3;
+        webgl_position_buffer.numItems = this.positionBuffer.length / 3;
+
+        let webgl_normal_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, webgl_normal_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.normalBuffer), gl.STATIC_DRAW);
+        webgl_normal_buffer.itemSize = 3;
+        webgl_normal_buffer.numItems = this.normalBuffer.length / 3;
+
+        let webgl_tangent_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, webgl_tangent_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.tangentBuffer), gl.STATIC_DRAW);
+        webgl_tangent_buffer.itemSize = 3;
+        webgl_tangent_buffer.numItems = this.tangentBuffer.length / 3;
+
+        let webgl_binormal_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, webgl_binormal_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.biNormalBuffer), gl.STATIC_DRAW);
+        webgl_binormal_buffer.itemSize = 3;
+        webgl_binormal_buffer.numItems = this.biNormalBuffer.length / 3;
+
+        let webgl_color_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, webgl_color_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.colorBuffer), gl.STATIC_DRAW);
+        webgl_color_buffer.itemSize = 3;
+        webgl_color_buffer.numItems = this.colorBuffer.length / 3; 
+
+        let webgl_uv_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, webgl_uv_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.uvBuffer), gl.STATIC_DRAW);    
+        webgl_uv_buffer.itemSize = 2;
+        webgl_uv_buffer.numItems = this.uvBuffer.length / 2; 
+
+        let webgl_index_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, webgl_index_buffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.indexBuffer), gl.STATIC_DRAW);
+        webgl_index_buffer.itemSize = 1;
+        webgl_index_buffer.numItems = this.indexBuffer.length;
+
+        return {
+            webgl_position_buffer,
+            webgl_normal_buffer,
+            webgl_tangent_buffer,
+            webgl_binormal_buffer,
+            webgl_color_buffer,
+            webgl_uv_buffer,
+            webgl_index_buffer
+        }
+
     }
 
 }
