@@ -1,5 +1,7 @@
 class Transformable {
 
+    // Objeto "Transformable" para agrupar otros objetos
+
     posMatrix;
     completePosMatrix;
     children = [];
@@ -73,11 +75,11 @@ class Object3D extends Transformable {
     texture;
     textureNormal;
 
-    ambFactor;
-    difFactor;
+    ambFactor; // Parámetro de iluminación de ambiente
+    difFactor; // Parámetro de iluminación difusa
 
-    specular;
-    lightSource;
+    specular; // Refleja especularmente?
+    lightSource; // Es una fuente de luz?
 
     positionBuffer = [];
     normalBuffer = [];
@@ -110,6 +112,13 @@ class Object3D extends Transformable {
 
     setTextureNormal(textureNormal){
         this.textureNormal = textureNormal;
+    }
+
+    setLightingParams(ambFactor,difFactor,isLightSource,isSpecular){
+        this.ambFactor = ambFactor;
+        this.difFactor = difFactor;
+        this.lightSource = isLightSource;
+        this.specular = isSpecular;
     }
 
     setupBuffers(posMat, normMat) {
@@ -538,11 +547,110 @@ class Wall extends Object3D{
 }
 
 class Plane extends Object3D{
+
+    scale = 1.5;
+    offsetX = 0;
+    offsetY = 0;
+
     constructor(color,children=[]){
         super(color,new Surface(), children);
         this.difFactor = 0.5;
         this.specular = true;
     }
+
+    setOffsets(offsetX,offsetY){
+        this.offsetX = offsetX;
+        this.offsetY = offsetY;
+    }
+
+    planeUVBuffer(){
+
+        var planeUVBuffer = [];
+
+        for(var i = 0; i < this.positionBuffer.length; i += 3){
+
+            planeUVBuffer.push(this.positionBuffer[i]*this.scale+this.offsetX);
+            planeUVBuffer.push(this.positionBuffer[i+1]*this.scale+this.offsetY);
+
+        }
+
+        return planeUVBuffer;
+
+    }
+
+    setupBuffers(posMat, normMat) {
+
+        var buffersTBN = this.surface.getTBNBuffers(normMat);
+
+        this.positionBuffer = this.surface.getPositionBuffer(posMat);
+        this.normalBuffer = buffersTBN.normalBuffer;
+        this.tangentBuffer = buffersTBN.tangentBuffer;
+        this.biNormalBuffer = buffersTBN.biNormalBuffer;
+
+        this.uvBuffer = this.planeUVBuffer();
+
+        for(var i=0; i<this.positionBuffer.length; i += 3){
+            this.colorBuffer.push(this.color[0]/255);
+            this.colorBuffer.push(this.color[1]/255);
+            this.colorBuffer.push(this.color[2]/255);
+        }
+        
+        this.indexBuffer = this.surface.getIndexBuffer();
+        
+        let webgl_position_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, webgl_position_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.positionBuffer), gl.STATIC_DRAW);
+        webgl_position_buffer.itemSize = 3;
+        webgl_position_buffer.numItems = this.positionBuffer.length / 3;
+
+        let webgl_normal_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, webgl_normal_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.normalBuffer), gl.STATIC_DRAW);
+        webgl_normal_buffer.itemSize = 3;
+        webgl_normal_buffer.numItems = this.normalBuffer.length / 3;
+
+        let webgl_tangent_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, webgl_tangent_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.tangentBuffer), gl.STATIC_DRAW);
+        webgl_tangent_buffer.itemSize = 3;
+        webgl_tangent_buffer.numItems = this.tangentBuffer.length / 3;
+
+        let webgl_binormal_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, webgl_binormal_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.biNormalBuffer), gl.STATIC_DRAW);
+        webgl_binormal_buffer.itemSize = 3;
+        webgl_binormal_buffer.numItems = this.biNormalBuffer.length / 3;
+
+        let webgl_color_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, webgl_color_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.colorBuffer), gl.STATIC_DRAW);
+        webgl_color_buffer.itemSize = 3;
+        webgl_color_buffer.numItems = this.colorBuffer.length / 3; 
+
+        let webgl_uv_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, webgl_uv_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.uvBuffer), gl.STATIC_DRAW);    
+        webgl_uv_buffer.itemSize = 2;
+        webgl_uv_buffer.numItems = this.uvBuffer.length / 2; 
+
+        let webgl_index_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, webgl_index_buffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.indexBuffer), gl.STATIC_DRAW);
+        webgl_index_buffer.itemSize = 1;
+        webgl_index_buffer.numItems = this.indexBuffer.length;
+
+        return {
+            webgl_position_buffer,
+            webgl_normal_buffer,
+            webgl_tangent_buffer,
+            webgl_binormal_buffer,
+            webgl_color_buffer,
+            webgl_uv_buffer,
+            webgl_index_buffer
+        }
+
+    }
+
 }
 
 class Sphere extends Object3D{

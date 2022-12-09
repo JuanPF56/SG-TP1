@@ -1,3 +1,6 @@
+
+// Superficie genérica
+
 class Surface {
 
     rows = 20;
@@ -169,6 +172,8 @@ class Surface {
 
 }
 
+// Superficie de revolucióm
+
 class RevolutionSurface extends Surface{
 
     curveSampler;
@@ -317,6 +322,8 @@ class RevolutionSurface extends Surface{
     }
 
 }
+
+// Superficie de barrido
 
 class SweepSurface extends Surface{
 
@@ -475,13 +482,13 @@ class SweepSurface extends Surface{
                     nrm = vec4.fromValues(0,0,-1,1);
                     vec4.transformMat4(nrm,nrm,m);
 
-                    var tanVec = vec3.fromValues(tan[0],tan[1],tan[2]); 
+                    var tanVec = vec3.fromValues(-tan[0],-tan[1],-tan[2]); 
                     vec3.normalize(tanVec,tanVec);
                     var nrmVec = vec3.fromValues(nrm[0],nrm[1],nrm[2]); 
                     vec3.normalize(nrmVec,nrmVec);
 
                     var binVec = vec3.create();
-                    vec3.cross(binVec,nrmVec,tanVec);
+                    vec3.cross(binVec,tanVec,nrmVec);
                     vec3.normalize(binVec,binVec);
 
                     tangentBuffer.push(tanVec[0]);
@@ -504,12 +511,12 @@ class SweepSurface extends Surface{
                 var t = this.shapeVectors.tangVectors[j];
                 var n = this.shapeVectors.normVectors[j];
 
-                tan = vec4.fromValues(t[0],t[1],0,1);
+                tan = vec4.fromValues(-t[0],-t[1],0,1);
                 vec4.transformMat4(tan,tan,m);
                 nrm = vec4.fromValues(n[0],n[1],0,1);
                 vec4.transformMat4(nrm,nrm,m);
 
-                var tanVec = vec3.fromValues(tan[0],tan[1],tan[2]); 
+                var tanVec = vec3.fromValues(-tan[0],-tan[1],-tan[2]); 
                 vec3.normalize(tanVec,tanVec);
                 var nrmVec = vec3.fromValues(nrm[0],nrm[1],nrm[2]); 
                 vec3.normalize(nrmVec,nrmVec);
@@ -545,7 +552,7 @@ class SweepSurface extends Surface{
                     vec3.normalize(nrmVec,nrmVec);
 
                     var binVec = vec3.create();
-                    vec3.cross(binVec,nrmVec,tanVec);
+                    vec3.cross(binVec,tanVec,nrmVec);
                     vec3.normalize(binVec,binVec);
 
                     tangentBuffer.push(tanVec[0]);
@@ -662,6 +669,8 @@ class SweepSurface extends Surface{
     }
 
 }
+
+// Superficie esférica
 
 class SphereSurf extends Surface{
 

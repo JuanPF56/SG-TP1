@@ -37,8 +37,10 @@
             uniform mat4 normalMatrix;
 
             uniform vec3 uDirLightPosition;
+            uniform vec4 uCameraPos;
 
             varying highp vec3 vLightDir;
+            varying highp vec3 vCamera;
 
             varying vec3 vTangent;   
             varying vec3 vBiNormal;    
@@ -57,6 +59,7 @@
                 vNormal=(normalMatrix*vec4(aVertexNormal,1.0)).xyz; 
 
                 vLightDir = normalize((normalMatrix*vec4(((modelMatrix*vec4(aVertexPosition + vec3(5.0,-5.0,5.0),1.0)).xyz - vPosWorld),1.0)).xyz);
+                vCamera = normalize(-uCameraPos.xyz - vPosWorld);
 
                 vColor = aVertexColor;
                 vUv = aVertexUv;
@@ -120,13 +123,16 @@
             uniform vec3 uDirLightColor;
             uniform vec3 uLightSourceColor;
 
+            uniform vec4 uCameraPos;
+
             uniform float uAmbFactor;
             uniform float uDifFactor;
 
             uniform bool uIsSpecular;
             uniform bool uIsLightSource;
-
+            uniform bool uNormalMap;
             varying highp vec3 vLightDir;
+            varying highp vec3 vCamera;
 
             mat3 transpose(mat3 m) {
 
@@ -155,7 +161,7 @@
 
                 if(uIsLightSource){
 
-                    finalColor = vec3(1.0,1.0,1.0);
+                    finalColor = texture2D(uSampler1,vUv).xyz;
 
                 } else {
 
@@ -163,41 +169,54 @@
 
                     vec4 textureColor = texture2D(uSampler1,vUv);
 
-                    vec3 dirLightVec = normalize(vLightDir);
+                    vec3 dirLightVec;
+                    vec3 n;
+                    vec3 lightColor;
 
-                    vec3 n = normalize(TBN*(texture2D(uSampler2,vUv).rgb*2.0-1.0));
+                    vec3 cameraPos = normalize(TBN*(vCamera));
 
-                    vec3 lightColor = uAmbientColor * uAmbFactor + uDirLightColor * uDifFactor * max(dot(vNormal,dirLightVec), 0.0);
+                    if(uNormalMap){
+                        dirLightVec = normalize(TBN*vLightDir);
+                        n = normalize(texture2D(uSampler2,vUv).rgb*2.0-1.0);
+                        lightColor = uAmbientColor * uAmbFactor + uDirLightColor * uDifFactor * max(dot(n,dirLightVec), 0.3);
+                    } else{
+                        dirLightVec = normalize(vLightDir);
+                        n = vNormal;
+                        lightColor = uAmbientColor * uAmbFactor + uDirLightColor * uDifFactor * max(dot(n,dirLightVec), 0.0);
+                    }
+
 
                     if(uIsSpecular){
 
-                        vec3 cameraPos = normalize(-vPosWorld);
+                        vec3 r = normalize(reflect(-dirLightVec,n));
+                        lightColor += uDirLightColor * pow(max(dot(cameraPos,r),0.0),20.0);
 
-                        vec3 r = -normalize(reflect(dirLightVec,vNormal));
-
-                      lightColor += uDirLightColor * pow(max(dot(r,cameraPos),0.0),20.0);
                     }
+                        
 
                     for(int i = 0; i < MAX_LIGHTS; i++){
+
+                        float a = 15.0;
+                        float b = 5.0;
+                        float c = 2.0;
 
                         vec3 lightPos = uLightPos[i].xyz;
 
                         vec3 lightVec = normalize(TBN*(lightPos-vPosWorld));
 
+                        vec3 cameraPos = normalize(TBN*(vCamera));
+
                         float dist = sqrt(dot(lightPos-vPosWorld, lightPos-vPosWorld));
 
-                        lightColor += uLightSourceColor/255.0 * uAmbFactor / pow(dist,2.0) + uLightSourceColor/255.0 * uDifFactor * max(dot(vNormal,lightVec), 0.0) / pow(dist,2.0);
+                        lightColor += uLightSourceColor * uAmbFactor / (a*pow(dist,2.0)+b*dist+c) + uLightSourceColor * uDifFactor * max(dot(n,lightVec), 0.0) / (a*pow(dist,2.0)+b*dist+c);
 
                         if(uIsSpecular){
 
-                            vec3 vCameraPos = (vec4(1.0,1.0,1.0,1.0)*viewMatrix).xyz;
-                           vec3 cameraPos = normalize(TBN*(vCameraPos-vPosWorld));
+                           vec3 r = normalize(reflect(-lightVec,n));
 
-                           vec3 r = -normalize(reflect(lightVec,vNormal));
+                           lightColor += uLightSourceColor * pow(max(dot(cameraPos,r),0.0),10.0) / (2.0*pow(dist,2.0)+dist);
 
-                           lightColor += uLightSourceColor/255.0 * pow(max(dot(r,cameraPos),0.0),20.0) / pow(dist,2.0);
-
-                       }
+                        }
 
                     }
 
@@ -261,6 +280,8 @@
             var projMatrix = mat4.create();
             var normalMatrix = mat4.create();
 
+            var cameraPos;
+
             var dirLightPosition;
 
             var textures = [];
@@ -278,8 +299,11 @@
             var loaded = 1;
             var s = 0;
             var shot = 0;
+            var animSpeed = 1;
             var start;
             var end;
+
+            var waterOffset = 0;
 
             const options = {
 
@@ -291,17 +315,21 @@
                 anguloPuerta: 0,
                 rotacionCatapulta: 180,
                 ubicacionCatapulta: 0,
+                velocidadAnimacion: 1,
                 camara: 1,
                 renderizado: 0,
                 colorAmbiente: [0,100,255],
                 colorSol: [255,180,0],
-                colorLuces: [255,255,0]
+                colorLuces: [255,255,0],
+                mapasNormales: false
 
             }
 
             var ambientColor;
             var sunColor;
             var fireballColor;
+
+            var normalMap;
 
             var ambFactor;
             var difFactor;
@@ -334,6 +362,8 @@
 
             var deltaX=0;
             var deltaY=0;
+
+            // Controles
 
             $('canvas').mousemove(function(e){ 
                 mouse.x = e.clientX || e.pageX; 
@@ -467,6 +497,8 @@
             }
 
             function initTextures(){
+
+                // Inicialización de las texturas
             
                 textures["uvGrid"] = loadTexture("img/uv.jpg",false,false);
 
@@ -494,7 +526,10 @@
                 textures["fireball"] = loadTexture("img/fireball.png",false,true);
                 textures["fireballN"] = loadTexture("img/fireball_normal.png",false,true);
 
-                textures["water"] = loadTexture("img/water.png",false,true);
+                textures["water"] = loadTexture("img/water.jpg",false,true);
+                textures["waterN"] = loadTexture("img/water_normal.jpg",false,true);
+
+                textures["field"] = loadTexture("img/field.png",false,false);
 
             }
            
@@ -503,8 +538,6 @@
 
                 gl.enable(gl.DEPTH_TEST);
 
-                //set the clear color
-
                 gl.clearColor(0.0, 0.66, 0.9, 1.0);     
                 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);     
     
@@ -512,7 +545,7 @@
 
                 // Matrix de Proyeccion Perspectiva
 
-                mat4.perspective(projMatrix,45, canvas.width / canvas.height, 0.1, 100.0);
+                mat4.perspective(projMatrix, 45, canvas.width / canvas.height, 0.1, 5000.0);
                 
                 mat4.identity(modelMatrix);
                 mat4.identity(viewMatrix);
@@ -527,14 +560,17 @@
                 else {var fs_source = document.getElementById('shader-fs-colors').innerHTML;}
                 var vs_source = document.getElementById('shader-vs').innerHTML;
 
-                //compile shaders    
+                // Compilar shaders   
+
                 vertexShader = makeShader(vs_source, gl.VERTEX_SHADER);
                 fragmentShader = makeShader(fs_source, gl.FRAGMENT_SHADER);
                 
-                //create program
+                // Crear programa
+
                 glProgram = gl.createProgram();
-                
-                //attach and link shaders to the program
+            
+                // Linkear shaders al programa
+
                 gl.attachShader(glProgram, vertexShader);
                 gl.attachShader(glProgram, fragmentShader);
                 gl.linkProgram(glProgram);
@@ -543,7 +579,8 @@
                     alert("Unable to initialize the shader program.");
                 }
                 
-                //use program
+                // Usar programa
+
                 gl.useProgram(glProgram);
 
                 if(renderType == 0) {
@@ -552,7 +589,7 @@
                     glProgram.samplerUniform2 = gl.getUniformLocation(glProgram, "uSampler2");
 
                     dirLightPosition = gl.getUniformLocation(glProgram,"uDirLightPosition");
-                    gl.uniform3fv(dirLightPosition,vec3.fromValues(2.0,1.0,2.0));
+                    gl.uniform3fv(dirLightPosition,vec3.fromValues(2.0,10.0,2.0));
 
                     ambFactor = gl.getUniformLocation(glProgram,"uAmbFactor");
                     difFactor = gl.getUniformLocation(glProgram,"uDifFactor");
@@ -568,12 +605,20 @@
 
                     fireballColor = gl.getUniformLocation(glProgram,"uLightSourceColor");
                     gl.uniform3fv(fireballColor,vec3.fromValues(1.0,1.0,0.0));
+
+                    normalMap = gl.getUniformLocation(glProgram,"uNormalMap");
+                    gl.uniform1f(normalMap, false);
+
+                    cameraPos = gl.getUniformLocation(glProgram,"uCameraPos");
+
                 }
 
             }
             
             function makeShader(src, type){
-                //compile the vertex shader
+
+                // Compilar el shader
+
                 var shader = gl.createShader(type);
                 gl.shaderSource(shader, src);
                 gl.compileShader(shader);
@@ -582,10 +627,12 @@
                     console.log("Error compiling shader: " + gl.getShaderInfoLog(shader));
                 }
                 return shader;
+
             }
 
 
             function setupVertexShaderMatrix(){
+
                 var modelMatrixUniform = gl.getUniformLocation(glProgram, "modelMatrix");
                 var viewMatrixUniform  = gl.getUniformLocation(glProgram, "viewMatrix");
                 var projMatrixUniform  = gl.getUniformLocation(glProgram, "projMatrix");
@@ -595,6 +642,7 @@
                 gl.uniformMatrix4fv(viewMatrixUniform, false, viewMatrix);
                 gl.uniformMatrix4fv(projMatrixUniform, false, projMatrix);
                 gl.uniformMatrix4fv(normalMatrixUniform, false, normalMatrix);
+
             } 
 
             function initMenu(){
@@ -634,6 +682,9 @@
                 sceneSettings.add(options, "ubicacionCatapulta",0,360,1).onChange((val) => {
                     catapultPos = val;
                 });
+                sceneSettings.add(options, "velocidadAnimacion", {"x0.25" : 0.25, "x0.5" : 0.5, "x1" : 1}).onChange((val) => {
+                    animSpeed = val;
+                });
 
                 var shootCatapult = { "Disparar catapulta":function(){
                     anim = 0;
@@ -642,7 +693,9 @@
                 sceneSettings.add(shootCatapult, "Disparar catapulta");
 
                 var reloadCatapult = { "Recargar catapulta":function(){
-                    loaded = 1;
+                    if(s == 0 || s > 5){
+                        loaded = 1;
+                    }
                 }};
 
                 sceneSettings.add(reloadCatapult, "Recargar catapulta");
@@ -659,13 +712,17 @@
                     }
                 }).listen();
 
-                gui.add(options, "renderizado", { "Texturas": '0', "Colores": '1', "Normales": '2'}).onChange((val) => {
+                const lightingSettings = gui.addFolder("Iluminacion");
+                lightingSettings.open();
+
+                lightingSettings.add(options, "renderizado", { "Texturas": '0', "Colores": '1', "Normales": '2'}).onChange((val) => {
                     renderType = val;
                     initShaders();
                 });
 
-                const lightingSettings = gui.addFolder("Iluminacion");
-                lightingSettings.open();
+                lightingSettings.add(options, "mapasNormales").onChange((val) => {
+                    gl.uniform1f(normalMap, val);
+                });
 
                 lightingSettings.addColor(options, "colorAmbiente").onChange(() => {
                 
@@ -709,6 +766,8 @@
         
             function readSVGpath(name){
 
+                // Parseo de puntos de control desde lo copiado de imagenes SVG
+
                 var parser = new DOMParser();
                 var path = document.getElementById(name+"Path").getAttribute("d");
 
@@ -741,7 +800,15 @@
 
             }
 
+
+
+
+            // Creación de objetos y dibujado de escena
+
+
             function createWindows(height, width, zCoord=0) {
+
+                // Creo ventanas para el castillo según cuantas entran
 
                 var ventanas = [];
 
@@ -770,6 +837,8 @@
 
             function createDetails(zCoord=0){
 
+                // Pequeños relieves del castillo, separan los pisos
+
                 var bloques = [];
 
                 bloqueD1 = new Block([255, 204, 102],0.02,0.02,castleLength);
@@ -785,14 +854,14 @@
                 bloqueD3 = new Block([255, 204, 102],0.02,0.02,castleWidth);
                 bloqueD3.setTexture(textures.marble);
                 bloqueD3.setTextureNormal(textures.marbleN);
-                bloqueD3.rotateZ(Math.PI/2);
-                bloqueD3.translate(0,castleLength/2,zCoord);
+                bloqueD3.rotateZ(-Math.PI/2);
+                bloqueD3.translate(0,-castleLength/2,zCoord);
 
                 bloqueD4 = new Block([255, 204, 102],0.02,0.02,castleWidth);
                 bloqueD4.setTexture(textures.marble);
                 bloqueD4.setTextureNormal(textures.marbleN);
-                bloqueD4.rotateZ(Math.PI/2);
-                bloqueD4.translate(0,-castleLength/2,zCoord);
+                bloqueD4.rotateZ(-Math.PI/2);
+                bloqueD4.translate(0,castleLength/2,zCoord);
 
                 bloques.push(bloqueD1);
                 bloques.push(bloqueD2);
@@ -804,6 +873,8 @@
             }
 
             function drawCastle(){
+
+                // Dibujo castillo
 
                 var castleHeight = castleFloors/4;
 
@@ -867,6 +938,8 @@
             }
 
             function drawWalls(ratio=6){
+
+                // Dibujo muralla
 
                 var angle = 2*Math.PI/wallSides;
                 var minY = 10000;
@@ -973,6 +1046,8 @@
 
             function shootProjectile(projectile){
 
+                // Cálculo de trayectoria del proyectil
+
                 var startVec = vec4.create();
                 var endVec = vec4.create();
 
@@ -992,11 +1067,13 @@
 
                 gl.uniform4fv(gl.getUniformLocation(glProgram,"uLightPos[0]"),vec4.fromValues(position[0],position[1],position[2],1.0));
 
-                s += 0.25;
+                s += 0.1*animSpeed;
 
             }
 
             function drawCatapult(){
+
+                // Dibujo de catapulta
 
                 municion = new Sphere([255, 255, 200]);
                 municion.setTexture(textures.fireball);
@@ -1010,13 +1087,13 @@
                 proyectil.scale(0.4*shot);
 
                 if (shot == 1){
-                    shootProjectile(proyectil);
+                    shootProjectile(proyectil); // Se inicia el disparo
                 } 
 
-                if(s == 5){
+                if(s >= 5){
                     shot = 0;
                     s = 0;
-                    gl.uniform4fv(gl.getUniformLocation(glProgram,"uLightPos[0]"),vec4.fromValues(100.0,100.0,100.0,1.0));
+                    gl.uniform4fv(gl.getUniformLocation(glProgram,"uLightPos[0]"),vec4.fromValues(100.0,100.0,100.0,1.0)); // Quito la luz llevandolá a un punto lejano
                 }
 
                 cabeza = new Block([102, 68, 0],0.2,1.2,1.2,0,0,[municion]);
@@ -1044,7 +1121,7 @@
                 ejeCP.setTextureNormal(textures.woodN);
                 ejeCP.translate(2.8,0,0);
                 ejeCP.rotateZ(Math.PI/2);
-                ejeCP.rotateX(-Math.PI*((Math.sin(anim))*1/3+1/6));
+                ejeCP.rotateX(-Math.PI*((Math.sin(anim))*2/5+1/6));
 
                 pala = new Block([102, 68, 0],0.2,0.2,6,0.03,0, [ejeCP, cabeza]);
                 pala.setTexture(textures.wood);
@@ -1121,6 +1198,7 @@
                 agua = new Plane([102, 217, 255]);
                 agua.setTexture(textures.water);
                 agua.setTextureNormal(textures.waterN);
+                agua.setOffsets(waterOffset, waterOffset);
                 agua.translate(0,0,-0.1);
                 agua.rotateX(-Math.PI/2);
 
@@ -1139,9 +1217,17 @@
 
                 cat = drawCatapult();
 
-                escena = new Transformable([terreno,plataforma,cat.catapulta,cat.proyectil]);
+                fondo = new Sphere([102, 217, 255]);
+                fondo.setTexture(textures.field);
+                fondo.setLightingParams(2,1,false,false);
+                fondo.rotateX(-Math.PI/2);
+                fondo.scale(50);
+
+                escena = new Transformable([terreno,plataforma,cat.catapulta,cat.proyectil, fondo]);
 
                 escena.draw(mat4.create(),mat4.create());
+
+                // Animación de catapulta para disparo
 
                 if(anim == 0 && loaded == 1 && shot == 0){
                     start = municion.getCompletePosMatrix();
@@ -1149,18 +1235,21 @@
 
                 if(anim<5){
                     if(anim == 1 && loaded == 1 && shot == 0){
+                        // En el punto más alto, desaparece la munición y aparece el proyectil.
                         end = municion.getCompletePosMatrix();
                         loaded = 0;
                         shot = 1;
                     } 
-                    t = 1;
+                    t = 0.5*animSpeed;
                 } else if(anim==5){
-                    t = 0.001;
+                    t = 0.0005*animSpeed;
                 } else if (anim>5.1 && anim<6){
-                    t = 0.01;
+                    t = 0.005*animSpeed;
                 } else{
                     t = 0;
                 }
+
+                // Posiciones de luces
 
                 if(loaded==1){
                     position = vec4.create();
@@ -1180,11 +1269,15 @@
               
                 anim += t;
 
+                waterOffset += 0.001;
+
             }
 
  
 
             function controls(){
+
+                // Control de las diferentes cámaras
 
                 if(isMouseDown){
 
@@ -1252,6 +1345,12 @@
 
                 }
 
+                inverted = mat4.create();
+                mat4.invert(inverted,viewMatrix);
+
+                cameraPosVec = vec4.create();
+                mat4.getTranslation(cameraPosVec,inverted);
+                gl.uniform4fv(cameraPos,cameraPosVec);
 
                 mat4.invert(normalMatrix,normalMatrix);
                 mat4.transpose(normalMatrix,normalMatrix);

@@ -1,3 +1,5 @@
+// Curvas Bezier
+
 class CubicBezier2D {
 
     controlPoints = [];
@@ -228,6 +230,7 @@ class CubicBezier3D {
 }
 **/
 
+// Sampleo de curvas
 
 class CurveSampler {
 
@@ -295,7 +298,6 @@ class CurveSampler {
 
                 var bottomLeft = vec2.fromValues(minX,minY);
                 var topRight = vec2.fromValues(maxX,maxY);
-
 
 
                 //if(this.curve instanceof CubicBezier3D){
