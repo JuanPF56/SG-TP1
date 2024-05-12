@@ -1,3 +1,5 @@
 TP1 y TP2 Sistemas Gráficos
 
-https://juanpf56.github.io/SG-TP1/
+Escena de castillo realizada con WebGL
+
+[Sitio Web](https://juanpf56.github.io/SG-TP1/)
